@@ -10,17 +10,17 @@ export default function Home() {
 
   // Navigate to the /calculator route when the button is clicked.
   const handleButtonClick = (): void => {
-    router.push('/calculator');
+    router.push('/map');
   };
 
   return (
     <main className="main">
       <div className="description">
         <Typography variant="h4" className="homepageHeading" gutterBottom>
-          Technical exam app
+          Real Estate Data Visualization.
         </Typography>
         <Typography variant="body1" className="descriptionText" paragraph>
-          This app will map out data from a CSV and show it to you ina  helpful map.
+          Explore and interact with the provided Vancouver resale data on an interactive map. Use filters to dive deeper into the trends and insights from the dataset.
         </Typography>
         <Box className="buttonWrapper">
           <Button
