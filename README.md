@@ -1,8 +1,34 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Spark Front-End JavaScript Coding Challenge
 
-## Getting Started
+### Message from Jacob:
 
-First, run the development server:
+The original repository for this take-home project utilized Create-React-App, which has been deprecated by the core React team. As a result, 
+I opted to build this project using Next.js, MUI, and TypeScript—a more modern stack that aligns closer with my professional experience.
+
+This choice not only allows for improved performance and SEO through server-side rendering, but also provides access to the powerful 
+App Router features introduced in Next.js 13. These enhancements facilitate a more efficient data-fetching strategy 
+and a seamless user experience in my opinion.
+
+## About [Spark](https://spark.re)
+
+At Spark, our mission is to empower the new development industry to sell more homes, faster. As digitization accelerates, we take pride in leading the industry with innovative digital sales, marketing, and management solutions, striving to power every new development transaction.
+
+We are currently seeking a JavaScript front-end developer. This challenge aims to assess your coding style, problem-solving approach, and proficiency in JavaScript.
+
+## The Challenge
+
+I have created an application that serves as a boilerplate for a [Next.js](https://nextjs.org/) project, initialized using [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app). The repository includes a `/src/data` directory containing a simplified dataset of MLS real estate transactions in Vancouver.
+
+### Requirements
+
+- Utilize the provided resale data in `/src/data` (sample Vancouver resale data from 2023, excluding single-family homes).
+- Integrate a mapping library to visualize the data on a map. We recommend using [Google Maps](https://cloud.google.com/maps-platform) or [Mapbox](https://www.mapbox.com/), as Spark's data product leverages Mapbox.
+- Create a user interface that enables users to interact with, filter, and explore the data.
+- Make regular, meaningful commits that clearly reflect the logical progression of your work.
+
+### Getting Started
+
+To launch the development server, execute the following command:
 
 ```bash
 npm run dev
@@ -12,25 +38,3 @@ yarn dev
 pnpm dev
 # or
 bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.

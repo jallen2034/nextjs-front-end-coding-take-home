@@ -1,95 +1,38 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client";
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { Button, Typography, Box } from "@mui/material";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import "./app.scss";
 
 export default function Home() {
+  const router: AppRouterInstance = useRouter();
+
+  // Navigate to the /calculator route when the button is clicked.
+  const handleButtonClick = (): void => {
+    router.push('/map');
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="main">
+      <div className="description">
+        <Typography variant="h4" className="homepageHeading" gutterBottom>
+          Real Estate Data Visualization.
+        </Typography>
+        <Typography variant="body1" className="descriptionText" paragraph>
+          Explore and interact with the provided Vancouver resale data on an interactive map. Use filters to dive deeper into the trends and insights from the dataset.
+        </Typography>
+        <Box className="buttonWrapper">
+          <Button
+            variant="contained"
+            color="primary"
+            className="calculatorButton"
+            onClick={handleButtonClick}
           >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+            Launch map
+          </Button>
+        </Box>
       </div>
     </main>
-  )
-}
+  );
+};
