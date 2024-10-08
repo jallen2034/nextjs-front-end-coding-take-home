@@ -1,11 +1,11 @@
 "use client"
 
 import { useMemo } from "react"
-import * as React from 'react';
+import * as React from "react"
 import { ResaleData } from "@/app/map/types"
-import Map from 'react-map-gl';
-import { MAPBOX_API_SECRET_KEY } from "@/app/apiUtils";
-import 'mapbox-gl/dist/mapbox-gl.css';
+import Map from "react-map-gl"
+import { MAPBOX_API_SECRET_KEY } from "@/app/apiUtils"
+import "mapbox-gl/dist/mapbox-gl.css"
 
 interface MapBoxContainerProps {
   records: ResaleData
@@ -13,12 +13,12 @@ interface MapBoxContainerProps {
 
 // Encapsulates the Mapbox map and is reusable across the Next.js app.
 const MapboxContainer = ({ records }: MapBoxContainerProps) => {
-
+  
   /* Memoize the records to prevent unnecessary recalculations on re-renders. Useful
    * for improving performance when handling static, large datasets from the server. */
-  const memoizedRecords: ResaleData = useMemo(() => records, [records]);
-  console.log(memoizedRecords);
-
+  const memoizedRecords: ResaleData = useMemo(() => records, [records])
+  console.log(memoizedRecords)
+  
   return (
     <Map
       mapboxAccessToken={MAPBOX_API_SECRET_KEY}
@@ -30,7 +30,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       style={{ width: 600, height: 400 }}
       mapStyle="mapbox://styles/mapbox/streets-v9"
     />
-  );
-};
+  )
+}
 
-export default MapboxContainer;
+export default MapboxContainer
