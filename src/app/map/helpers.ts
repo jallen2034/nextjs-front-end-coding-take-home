@@ -1,8 +1,8 @@
 import { promises as fs } from "fs"
-import { CsvParseOptions, ResaleData } from "@/app/map/types"
+import { CsvParseOptions, ResaleDataFromAPI } from "@/app/map/types"
 import { parse } from "csv-parse/sync"
 
-const readAndParseCSV = async (): Promise<ResaleData> => {
+const readAndParseCSV = async (): Promise<ResaleDataFromAPI> => {
   // Read the CSV file located in the public directory.
   const filePath: string = process.cwd() + "/public/data/resale-data.csv"
   let fileContent: string = await fs.readFile(filePath, "utf8")
