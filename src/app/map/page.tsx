@@ -9,7 +9,7 @@ import { ResaleData } from "@/app/map/types"
  * https://vercel.com/guides/loading-static-file-nextjs-api-route */
 const MapPage = async () => {
   // Read the CSV file located in the public directory.
-  const records: ResaleData = await readAndParseCSV();
+  const records: ResaleData = await readAndParseCSV()
 
   return (
     <div className="map-main-container">
