@@ -17,4 +17,4 @@ export interface Property {
   longitude: string;
 }
 
-export type ResaleData = Property[];
+export type ResaleDataFromAPI = Property[];
