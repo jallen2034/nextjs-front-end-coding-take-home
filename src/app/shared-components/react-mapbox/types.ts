@@ -30,4 +30,10 @@ interface GeoJSONFeatureCollection {
   features: Feature[];
 }
 
-export type { MapBoxContainerProps, OnMoveCB, MapViewState, GeoJSONFeatureCollection };
+export type {
+  MapBoxContainerProps,
+  OnMoveCB,
+  MapViewState,
+  GeoJSONFeatureCollection,
+  Feature,
+};
