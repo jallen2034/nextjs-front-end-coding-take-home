@@ -48,7 +48,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     ({
       viewState: { longitude, latitude, zoom },
     }: ViewStateChangeEvent): void => {
-      setViewState( // Check if the new center is within the geofence (Lower Mainland Polygon)
+      setViewState( // Check if the new center is within the geofence (Lower Mainland Polygon).
         (prev: MapViewState): MapViewState => ({
           ...prev,
           longitude,
