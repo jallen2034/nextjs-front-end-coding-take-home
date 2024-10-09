@@ -14,19 +14,19 @@ interface MapViewState {
 }
 
 interface Coordinates {
-  type: "Point"; // The type of geometry (Point, LineString, etc.)
-  coordinates: [number, number];
+  type: string; // The type of geometry (Point, LineString, etc.)
+  coordinates: number[];
 }
 
 interface Feature {
-  type: "Feature";
+  type: string;
   geometry: Coordinates;
   properties: string;
 }
 
 // Define the interface for the entire GeoJSON FeatureCollection
 interface GeoJSONFeatureCollection {
-  type: "FeatureCollection";
+  type: string;
   features: Feature[];
 }
 

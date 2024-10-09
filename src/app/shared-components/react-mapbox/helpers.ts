@@ -15,7 +15,7 @@ const generateGeoJsonDataFromMemoizedRecords = (
   memoizedRecords: ResaleDataFromAPI,
 ): GeoJSONFeatureCollection => {
   // Map over the records to create GeoJSON features.
-  const features: any = memoizedRecords.map(
+  const features = memoizedRecords.map(
     ({ longitude, latitude }: Property) => {
       return {
         type: "Feature", // Each feature must have a type

@@ -1,5 +1,5 @@
 // generateGeoJsonData.test.ts
-import { ResaleDataFromAPI, Property } from "@/app/map/types";
+import { ResaleDataFromAPI } from "@/app/map/types";
 import { generateGeoJsonDataFromMemoizedRecords } from "@/app/shared-components/react-mapbox/helpers";
 import { GeoJSONFeatureCollection } from "@/app/shared-components/react-mapbox/types";
 

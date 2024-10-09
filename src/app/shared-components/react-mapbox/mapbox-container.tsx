@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import * as React from "react";
 import Map, { ViewStateChangeEvent, Source, Layer } from "react-map-gl";
 import { MAPBOX_API_SECRET_KEY } from "@/app/apiUtils";
@@ -39,7 +39,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
 
   /* Memoize the records and GeoJSON data to prevent unnecessary recalculations on re-renders.
    * Useful for improving performance when handling static, large datasets from the server. */
-  const memoizedGeoJsonData: GeoJSONFeatureCollection = useMemo(() => {
+  const memoizedGeoJsonData: GeoJSONFeatureCollection = useMemo((): GeoJSONFeatureCollection => {
     return generateGeoJsonDataFromMemoizedRecords(records);
   }, [records]);
 
@@ -48,8 +48,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     ({
       viewState: { longitude, latitude, zoom },
     }: ViewStateChangeEvent): void => {
-      // Check if the new center is within the geofence (Lower Mainland Polygon)
-      setViewState(
+      setViewState( // Check if the new center is within the geofence (Lower Mainland Polygon)
         (prev: MapViewState): MapViewState => ({
           ...prev,
           longitude,
