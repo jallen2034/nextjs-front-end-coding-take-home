@@ -16,14 +16,17 @@ const generateGeoJsonDataFromMemoizedRecords = (
 ): GeoJSONFeatureCollection => {
   // Map over the records to create GeoJSON features.
   const features: Feature[] = memoizedRecords.map(
-    ({ longitude, latitude }: Property) => {
+    (property: Property) => {
+      const { longitude, latitude }: Property = property;
+      
+      
       return {
         type: "Feature", // Each feature must have a type.
         geometry: {
           type: "Point", // The geometry type is Point.
           coordinates: [parseFloat(longitude), parseFloat(latitude)],
         },
-        properties: "Hardcoded Marker",
+        properties: property,
       };
     },
   );
