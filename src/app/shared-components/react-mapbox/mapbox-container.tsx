@@ -17,22 +17,15 @@ import {
   MapViewState,
   SlidingWindowPointers,
 } from "@/app/shared-components/react-mapbox/types";
-import { CircleLayer } from "mapbox-gl";
 import { PropertyListItem } from "@/app/shared-components/property-list-item/property-list-item";
 import { Box, Button } from "@mui/material";
 import "./mapbox-container.scss";
 import "mapbox-gl/dist/mapbox-gl.css";
-
-// Style for the marker layer.
-const layerStyle: CircleLayer = {
-  id: "marker",
-  type: "circle",
-  source: "records",
-  paint: {
-    "circle-radius": 10,
-    "circle-color": "#4e06bb",
-  },
-};
+import {
+  clusterCountLayer,
+  clusterLayer,
+  unclusteredPointLayer,
+} from "@/app/shared-components/react-mapbox/mapbox-styles";
 
 // Encapsulates the Mapbox map and is reusable across the Next.js app.
 const MapboxContainer = ({ records }: MapBoxContainerProps) => {
@@ -116,9 +109,33 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     },
     [],
   );
-  
+
+  /* Onclick handler with the logic to cluster the map markers for properties on variable rates of zooming.
+   * https://visgl.github.io/react-map-gl/examples/clusters */
+  const onClick = (event: any) => {
+    const feature: any = event.features[0];
+    const clusterId: any = feature.properties.cluster_id;
+
+    const mapboxSource: any = event.target.getSource("records");
+
+    mapboxSource.getClusterExpansionZoom(
+      clusterId,
+      (err: any, zoom: any): void => {
+        if (err) return;
+
+        setViewState((prev) => ({
+          ...prev,
+          longitude: feature.geometry.coordinates[0],
+          latitude: feature.geometry.coordinates[1],
+          zoom,
+        }));
+      },
+    );
+  };
+
   return (
     <div className="mapbox-container">
+      {/* Container containing the map and markers rendered on it for each property. */}
       <Map
         {...viewState}
         onMove={onMove}
@@ -126,12 +143,23 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
         style={{ width: "100%", height: 400 }}
         maxBounds={lowerMainlandBounds}
         mapStyle="mapbox://styles/mapbox/streets-v9"
+        interactiveLayerIds={[clusterLayer.id]}
+        onClick={onClick}
       >
-        <Source id="hardcoded-marker" type="geojson" data={memoizedGeoJsonData}>
-          <Layer {...layerStyle} />
+        <Source
+          id="records"
+          type="geojson"
+          data={memoizedGeoJsonData}
+          cluster={true}
+          clusterMaxZoom={14}
+          clusterRadius={50}
+        >
+          <Layer {...clusterLayer} />
+          <Layer {...clusterCountLayer} />
+          <Layer {...unclusteredPointLayer} />
         </Source>
       </Map>
-      {/* Scrollable container for the list of properties */}
+
       <div className="property-list">
         {visibleFeatures.length > 0 &&
           visibleFeatures.map((feature: Feature) => (
