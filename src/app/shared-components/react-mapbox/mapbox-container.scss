@@ -1,22 +1,26 @@
+@use '../../base' as *;
+
 .mapbox-container {
   display: flex;
   flex-direction: column;
 
-  .propertyList {
-    max-height: 400px; // Adjust as needed
-    overflow-y: auto; // Make it scrollable
-    margin-top: 16px; // Space between the map and the list
+  .property-list {
+    max-height: 28rem;
+    overflow-y: auto;
+    margin-top: 16px;
     padding: 16px;
-    background-color: #f8f9fa; // Light background for contrast
+    background-color: #f8f9fa;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
 
-    // Loading spinner container styles
-    .loading-spinner-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%; // Ensures it takes the full height of the propertyList
+  .next-prev-button-container {
+    margin-top: 1rem;
+    min-height: 4rem;
+
+    .back-forward-button {
+      @include generic-next-back-button;
     }
   }
 }
+

@@ -43,8 +43,8 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --background-start-rgb: 245, 245, 245; /* Light gray */
+    --background-end-rgb: 255, 255, 255;   /* White */
 
     --primary-glow: radial-gradient(rgba(1, 65, 255, 0.4), rgba(1, 65, 255, 0));
     --secondary-glow: linear-gradient(
@@ -53,6 +53,27 @@
       rgba(1, 65, 255, 0),
       rgba(1, 65, 255, 0.3)
     );
+
+    /* For WebKit browsers (Chrome, Safari, Edge) */
+    ::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1; /* Light background */
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: #888; /* Light thumb color */
+      border-radius: 10px;
+      border: 2px solid #f1f1f1; /* Adds padding around the thumb */
+    }
+
+    /* Firefox */
+    html {
+      scrollbar-color: #888 #f1f1f1; /* Thumb color followed by track color */
+      scrollbar-width: thin;
+    }
 
     --tile-start-rgb: 2, 13, 46;
     --tile-end-rgb: 2, 5, 19;

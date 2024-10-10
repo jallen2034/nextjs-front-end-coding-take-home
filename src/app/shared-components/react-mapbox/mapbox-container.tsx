@@ -20,6 +20,7 @@ import {
 import { CircleLayer } from "mapbox-gl";
 import { PropertyListItem } from "@/app/shared-components/property-list-item/property-list-item";
 import { Box, Button } from "@mui/material";
+import "./mapbox-container.scss";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 // Style for the marker layer.
@@ -115,14 +116,14 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     },
     [],
   );
-
+  
   return (
     <div className="mapbox-container">
       <Map
         {...viewState}
         onMove={onMove}
         mapboxAccessToken={MAPBOX_API_SECRET_KEY}
-        style={{ width: 600, height: 400 }}
+        style={{ width: "100%", height: 400 }}
         maxBounds={lowerMainlandBounds}
         mapStyle="mapbox://styles/mapbox/streets-v9"
       >
@@ -130,18 +131,14 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
           <Layer {...layerStyle} />
         </Source>
       </Map>
-
       {/* Scrollable container for the list of properties */}
-      <div
-        className="propertyList"
-        style={{ height: "300px", overflowY: "auto" }}
-      >
+      <div className="property-list">
         {visibleFeatures.length > 0 &&
           visibleFeatures.map((feature) => (
             <PropertyListItem key={feature.properties.id} feature={feature} />
           ))}
       </div>
-      <div>
+      <div className="next-prev-button-container">
         {/* Load Previous and Next buttons */}
         <Box
           className="pagination-buttons"
@@ -151,16 +148,18 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
           <Button
             onClick={loadPreviousItems}
             disabled={slidingWindowForVisibleFeatures.leftIdx === 0}
+            className="back-forward-button"
           >
-            Load Previous {itemsPerPage} properties
+            Load Previous {itemsPerPage}
           </Button>
           <Button
             onClick={loadNextItems}
             disabled={
               slidingWindowForVisibleFeatures.rightIdx >= features.length - 1
             }
+            className="back-forward-button"
           >
-            Load Next {itemsPerPage} properties
+            Load Next {itemsPerPage}
           </Button>
         </Box>
       </div>
