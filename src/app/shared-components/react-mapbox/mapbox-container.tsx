@@ -62,7 +62,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
 
   // Helper function to load the next set of items, and slide the window over features right.
   const loadNextItems = useCallback((): void => {
-    const { rightIdx } = slidingWindowForVisibleFeatures;
+    const { rightIdx }: SlidingWindowPointers = slidingWindowForVisibleFeatures;
     if (rightIdx < features.length - 1) {
       setSlidingWindowForVisibleFeatures(
         getNextIndicesForWindow(
@@ -77,7 +77,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
 
   // Helper function to load the previous set of items, and slide the window over features left.
   const loadPreviousItems = useCallback((): void => {
-    const { leftIdx } = slidingWindowForVisibleFeatures;
+    const { leftIdx }: SlidingWindowPointers = slidingWindowForVisibleFeatures;
     if (leftIdx > 0) {
       setSlidingWindowForVisibleFeatures(
         getPreviousIndicesForWindow(
