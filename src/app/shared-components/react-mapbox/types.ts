@@ -1,5 +1,5 @@
 import { ViewStateChangeEvent } from "react-map-gl";
-import { ResaleDataFromAPI } from "@/app/map/types";
+import { Property, ResaleDataFromAPI } from "@/app/map/types";
 
 type OnMoveCB = (event: ViewStateChangeEvent) => void;
 
@@ -21,7 +21,7 @@ interface Coordinates {
 interface Feature {
   type: string;
   geometry: Coordinates;
-  properties: string;
+  properties: Property;
 }
 
 // Define the interface for the entire GeoJSON FeatureCollection
@@ -30,10 +30,16 @@ interface GeoJSONFeatureCollection {
   features: Feature[];
 }
 
+interface SlidingWindowPointers {
+  leftIdx: number,
+  rightIdx: number,
+}
+
 export type {
   MapBoxContainerProps,
   OnMoveCB,
   MapViewState,
   GeoJSONFeatureCollection,
   Feature,
+  SlidingWindowPointers
 };
