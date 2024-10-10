@@ -6,6 +6,8 @@ import Map, { ViewStateChangeEvent, Source, Layer } from "react-map-gl";
 import { MAPBOX_API_SECRET_KEY } from "@/app/apiUtils";
 import {
   generateGeoJsonDataFromMemoizedRecords,
+  getNextIndicesForWindow,
+  getPreviousIndicesForWindow,
   lowerMainlandBounds,
 } from "@/app/shared-components/react-mapbox/helpers";
 import {
@@ -17,7 +19,7 @@ import {
 } from "@/app/shared-components/react-mapbox/types";
 import { CircleLayer } from "mapbox-gl";
 import { PropertyListItem } from "@/app/shared-components/property-list-item/property-list-item";
-import { Box, CircularProgress, Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 // Style for the marker layer.
@@ -37,74 +39,73 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     useMemo((): GeoJSONFeatureCollection => {
       return generateGeoJsonDataFromMemoizedRecords(records);
     }, [records]);
-  
+
   const { features }: GeoJSONFeatureCollection = memoizedGeoJsonData;
-  
+
   const [viewState, setViewState] = useState<MapViewState>({
     longitude: -123.1207,
     latitude: 49.2827,
     zoom: 9.5,
   });
-  
-  const [loading, setLoading] = useState<boolean>(false);
   const [slidingWindowForVisibleFeatures, setSlidingWindowForVisibleFeatures] =
     useState<SlidingWindowPointers>({
       leftIdx: 0,
       rightIdx: 19,
     });
-  
+
   const [visibleFeatures, setVisibleFeatures] = useState<Feature[]>([]);
-  
+
   // Number of items per page.
   const itemsPerPage = 10;
   const maxVisibleFeatures = 20;
-  
-  // Helper function to load the next set of items
+
+  // Helper function to load the next set of items, and slide the window over features right.
   const loadNextItems = useCallback((): void => {
-    setLoading(true);
-    setTimeout((): void => {
-      const { rightIdx } = slidingWindowForVisibleFeatures;
-      if (rightIdx < features.length - 1) {
-        const newRightIdx = Math.min(rightIdx + itemsPerPage, features.length - 1);
-        const newLeftIdx = Math.max(newRightIdx - maxVisibleFeatures + 1, 0);
-        setSlidingWindowForVisibleFeatures({
-          leftIdx: newLeftIdx,
-          rightIdx: newRightIdx,
-        });
-      }
-      setLoading(false);
-    }, 300);
+    const { rightIdx } = slidingWindowForVisibleFeatures;
+    if (rightIdx < features.length - 1) {
+      setSlidingWindowForVisibleFeatures(
+        getNextIndicesForWindow(
+          rightIdx,
+          itemsPerPage,
+          maxVisibleFeatures,
+          features.length,
+        ),
+      );
+    }
   }, [features.length, slidingWindowForVisibleFeatures]);
-  
-  // Helper function to load the previous set of items
+
+  // Helper function to load the previous set of items, and slide the window over features left.
   const loadPreviousItems = useCallback((): void => {
-    setLoading(true);
-    setTimeout((): void => {
-      const { leftIdx } = slidingWindowForVisibleFeatures;
-      if (leftIdx > 0) {
-        const newLeftIdx = Math.max(leftIdx - itemsPerPage, 0);
-        const newRightIdx = Math.min(newLeftIdx + maxVisibleFeatures - 1, features.length - 1);
-        setSlidingWindowForVisibleFeatures({
-          leftIdx: newLeftIdx,
-          rightIdx: newRightIdx,
-        });
-      }
-      setLoading(false);
-    }, 300);
+    const { leftIdx } = slidingWindowForVisibleFeatures;
+    if (leftIdx > 0) {
+      setSlidingWindowForVisibleFeatures(
+        getPreviousIndicesForWindow(
+          leftIdx,
+          itemsPerPage,
+          maxVisibleFeatures,
+          features.length,
+        ),
+      );
+    }
   }, [features.length, slidingWindowForVisibleFeatures]);
-  
-  // Effect hook to update the visible features based on the sliding window.
+
+  // Effect hook to update the visible features based on the current state of the sliding window.
   useEffect((): void => {
     if (features.length) {
       const { leftIdx, rightIdx } = slidingWindowForVisibleFeatures;
-      const newVisibleFeatures = features.slice(leftIdx, rightIdx + 1);
+      const newVisibleFeatures: Feature[] = features.slice(
+        leftIdx,
+        rightIdx + 1,
+      );
       setVisibleFeatures(newVisibleFeatures);
     }
   }, [features, slidingWindowForVisibleFeatures]);
-  
+
   // Logic to handle moving around the map and looking at the markers.
   const onMove = useCallback(
-    ({ viewState: { longitude, latitude, zoom } }: ViewStateChangeEvent): void => {
+    ({
+      viewState: { longitude, latitude, zoom },
+    }: ViewStateChangeEvent): void => {
       setViewState((prev) => ({
         ...prev,
         longitude,
@@ -114,7 +115,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     },
     [],
   );
-  
+
   return (
     <div className="mapbox-container">
       <Map
@@ -129,34 +130,35 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
           <Layer {...layerStyle} />
         </Source>
       </Map>
-      
+
       {/* Scrollable container for the list of properties */}
-      <div className="propertyList" style={{ height: "300px", overflowY: "auto" }}>
-        {visibleFeatures.length > 0 ? (
+      <div
+        className="propertyList"
+        style={{ height: "300px", overflowY: "auto" }}
+      >
+        {visibleFeatures.length > 0 &&
           visibleFeatures.map((feature) => (
             <PropertyListItem key={feature.properties.id} feature={feature} />
-          ))
-        ) : (
-          <Box className="loading-spinner-container">
-            <CircularProgress />
-          </Box>
-        )}
-        
-        {/* Show loading spinner while loading more items */}
-        {loading && <CircularProgress />}
+          ))}
       </div>
       <div>
         {/* Load Previous and Next buttons */}
-        <Box className="pagination-buttons" display="flex" justifyContent="space-between">
+        <Box
+          className="pagination-buttons"
+          display="flex"
+          justifyContent="space-between"
+        >
           <Button
             onClick={loadPreviousItems}
-            disabled={slidingWindowForVisibleFeatures.leftIdx === 0 || loading}
+            disabled={slidingWindowForVisibleFeatures.leftIdx === 0}
           >
             Load Previous {itemsPerPage} properties
           </Button>
           <Button
             onClick={loadNextItems}
-            disabled={slidingWindowForVisibleFeatures.rightIdx >= features.length - 1 || loading}
+            disabled={
+              slidingWindowForVisibleFeatures.rightIdx >= features.length - 1
+            }
           >
             Load Next {itemsPerPage} properties
           </Button>
