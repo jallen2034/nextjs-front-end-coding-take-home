@@ -1,4 +1,4 @@
-# Spark Front-End JavaScript Coding Challenge
+# Front-End JavaScript Coding Challenge
 
 ### Message from Jacob:
 
@@ -9,12 +9,6 @@ This choice not only allows for improved performance and SEO through server-side
 App Router features introduced in Next.js 13. These enhancements facilitate a more efficient data-fetching strategy 
 and a seamless user experience in my opinion.
 
-## About [Spark](https://spark.re)
-
-At Spark, our mission is to empower the new development industry to sell more homes, faster. As digitization accelerates, we take pride in leading the industry with innovative digital sales, marketing, and management solutions, striving to power every new development transaction.
-
-We are currently seeking a JavaScript front-end developer. This challenge aims to assess your coding style, problem-solving approach, and proficiency in JavaScript.
-
 ## The Challenge
 
 I have created an application that serves as a boilerplate for a [Next.js](https://nextjs.org/) project, initialized using [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app). The repository includes a `/src/data` directory containing a simplified dataset of MLS real estate transactions in Vancouver.
@@ -22,7 +16,7 @@ I have created an application that serves as a boilerplate for a [Next.js](https
 ### Requirements
 
 - Utilize the provided resale data in `/src/data` (sample Vancouver resale data from 2023, excluding single-family homes).
-- Integrate a mapping library to visualize the data on a map. We recommend using [Google Maps](https://cloud.google.com/maps-platform) or [Mapbox](https://www.mapbox.com/), as Spark's data product leverages Mapbox.
+- Integrate a mapping library to visualize the data on a map. We recommend using [Google Maps](https://cloud.google.com/maps-platform) or [Mapbox](https://www.mapbox.com/), as our data product leverages Mapbox.
 - Create a user interface that enables users to interact with, filter, and explore the data.
 - Make regular, meaningful commits that clearly reflect the logical progression of your work.
 

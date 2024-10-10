@@ -57,8 +57,8 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   const [visibleFeatures, setVisibleFeatures] = useState<Feature[]>([]);
 
   // Number of items per page.
-  const itemsPerPage = 10;
-  const maxVisibleFeatures = 20;
+  const itemsPerPage: number = 10;
+  const maxVisibleFeatures: number = 20;
 
   // Helper function to load the next set of items, and slide the window over features right.
   const loadNextItems = useCallback((): void => {
@@ -107,7 +107,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     ({
       viewState: { longitude, latitude, zoom },
     }: ViewStateChangeEvent): void => {
-      setViewState((prev) => ({
+      setViewState((prev: MapViewState) => ({
         ...prev,
         longitude,
         latitude,
@@ -134,7 +134,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       {/* Scrollable container for the list of properties */}
       <div className="property-list">
         {visibleFeatures.length > 0 &&
-          visibleFeatures.map((feature) => (
+          visibleFeatures.map((feature: Feature) => (
             <PropertyListItem key={feature.properties.id} feature={feature} />
           ))}
       </div>
