@@ -20,6 +20,7 @@ const clusterLayer: CircleLayer = {
       "#196cc9",
     ],
     "circle-radius": ["step", ["get", "point_count"], 20, 100, 30, 750, 40],
+    "circle-opacity": 0.75,
   },
 };
 

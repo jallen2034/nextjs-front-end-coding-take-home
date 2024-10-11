@@ -16,6 +16,8 @@ import {
   getNextIndicesForWindow,
   getPreviousIndicesForWindow,
   lowerMainlandBounds,
+  setupMapListeners,
+  zoomToSelectedProperty,
 } from "@/app/shared-components/react-mapbox/helpers";
 import {
   Feature,
@@ -28,21 +30,18 @@ import { PropertyListItem } from "@/app/shared-components/property-list-item/pro
 import { Box, Button } from "@mui/material";
 import "./mapbox-container.scss";
 import "mapbox-gl/dist/mapbox-gl.css";
-import bbox from "@turf/bbox"; // Import the bbox utility to calculate bounding boxes.
 import {
   clusterCountLayer,
   clusterLayer,
   unclusteredPointLayer,
 } from "@/app/shared-components/react-mapbox/mapbox-styles";
-import { Property } from "@/app/map/types";
-import { MapMouseEvent } from "mapbox-gl";
 
 // Encapsulates the Mapbox map and is reusable across the Next.js app.
 const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   // Number of items per page.
   const itemsPerPage: number = 10;
   const maxVisibleFeatures: number = 20;
-  
+
   // Create a reference for the Map component.
   const mapRef: RefObject<MapRef> = useRef<MapRef>(null);
 
@@ -83,110 +82,57 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   useEffect((): void => {
     if (length) {
       const { leftIdx, rightIdx } = slidingWindowForVisibleFeatures;
-      const newVisibleFeatures: Feature[] = features.slice(
-        leftIdx,
-        rightIdx + 1,
-      );
+      const newVisibleFeatures: Feature[] = features.slice(leftIdx, rightIdx + 1);
       setVisibleFeatures(newVisibleFeatures);
     }
   }, [features, length, slidingWindowForVisibleFeatures]);
 
-  // Effect to listen for when 'selectedPropertyToLocateOnMap' changes, and "zero in" the map to that marker.
-  // https://github.com/visgl/react-map-gl/blob/7.1-release/examples/zoom-to-bounds/src/app.tsx
+  // Effect to handle zooming to a selected property on the map.
   useEffect((): void => {
-    // todo: refactor this out into a cleaner looking helper function.
-    if (!selectedPropertyToLocateOnMap) {
-      return;
-    }
-
+    if (!selectedPropertyToLocateOnMap) return;
+    
     const selectedFeature: Feature | undefined = features.find(
       (feature: Feature): boolean =>
         feature.properties.id === selectedPropertyToLocateOnMap,
     );
-
-    if (selectedFeature && mapRef.current) {
-      // @ts-expect-error: todo: fix this TS error with bbox wanting a correct Feature type def.
-      const [minLng, minLat, maxLng, maxLat] = bbox(selectedFeature); // Calculate bounding box of the selected feature.
-
-      // Fit the map to the bounding box.
-      mapRef.current.fitBounds(
-        [
-          [minLng, minLat],
-          [maxLng, maxLat],
-        ],
-        { padding: 40, duration: 1000 }, // Adjust padding and duration as needed.
-      );
+    
+    if (selectedFeature) {
+      zoomToSelectedProperty(selectedFeature, mapRef);
     }
-  }, [features, selectedPropertyToLocateOnMap]);
-  
+  }, [features, selectedPropertyToLocateOnMap, mapRef]);
+
   // Effect and lister to handle when a marker is clicked on in the map and pluck out it's info.
   useEffect(() => {
     const map: MapRef | null = mapRef.current;
-
-    // todo: refactor this out into a cleaner looking helper function.
+    
     if (map) {
-      /* Event listener for clicks on unclustered points (individual property markers).
-       * When a marker is clicked, it extracts the property ID from the clicked feature's properties
-       * and updates the selected property state to zoom in on that property on the map. */
-      map.on("click", "unclustered-point", (e: MapMouseEvent): void => {
-        if (!e.features) return;
-        const properties: Property = e.features[0].properties as Property;
-        const { id }: Property = properties
-        setSelectedPropertyToLocateOnMap(id);
-      });
-      
-      // Change cursor to a pointer when the users mouse hovers over an unclustered point.
-      map.on("mouseenter", "unclustered-point", (): void => {
-        map.getCanvas().style.cursor = "pointer"; // Change cursor to pointer
-      });
-      
-      // Reset cursor on mouse leave
-      map.on("mouseleave", "unclustered-point", (): void => {
-        map.getCanvas().style.cursor = ""; // Reset cursor style
-        // @ts-ignore
-        map.off("mouseenter", "unclustered-point"); // Clean up mouse enter listener
-        // @ts-ignore
-        map.off("mouseleave", "unclustered-point"); // Clean up mouse leave listener
-      });
-
-      // Clean up the event listener on unmount.
-      return (): void => {
-        // @ts-ignore
-        map.off("click", "unclustered-point");
-      };
+      const cleanup = setupMapListeners(map, setSelectedPropertyToLocateOnMap);
+      return cleanup; // Call the cleanup function when the component unmounts or when map changes.
     }
-  }, [mapRef, memoizedGeoJsonData]);
-  
+  }, [mapRef, memoizedGeoJsonData, setSelectedPropertyToLocateOnMap]);
+
   // Helper function to load the next set of items, and slide the window over features right.
   const loadNextItems = useCallback((): void => {
     const { rightIdx }: SlidingWindowPointers = slidingWindowForVisibleFeatures;
+    
     if (rightIdx < length - 1) {
       setSlidingWindowForVisibleFeatures(
-        getNextIndicesForWindow(
-          rightIdx,
-          itemsPerPage,
-          maxVisibleFeatures,
-          length,
-        ),
+        getNextIndicesForWindow(rightIdx, itemsPerPage, maxVisibleFeatures, length),
       );
     }
   }, [length, slidingWindowForVisibleFeatures]);
-  
+
   // Helper function to load the previous set of items, and slide the window over features left.
   const loadPreviousItems = useCallback((): void => {
     const { leftIdx }: SlidingWindowPointers = slidingWindowForVisibleFeatures;
+    
     if (leftIdx > 0) {
       setSlidingWindowForVisibleFeatures(
-        getPreviousIndicesForWindow(
-          leftIdx,
-          itemsPerPage,
-          maxVisibleFeatures,
-          length,
-        ),
+        getPreviousIndicesForWindow(leftIdx, itemsPerPage, maxVisibleFeatures, length),
       );
     }
   }, [length, slidingWindowForVisibleFeatures]);
-  
+
   // Logic to handle moving around the map and looking at the markers.
   const onMove = useCallback(
     ({
@@ -201,12 +147,12 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     },
     [],
   );
-  
+
   return (
     <div className="mapbox-container">
       {/* Container containing the map and markers rendered on it for each property. */}
       <Map
-        ref={mapRef} // Attach the ref to the Map component.
+        ref={mapRef} // Attach the ref to interact with the map instance directly.
         {...viewState}
         onMove={onMove}
         mapboxAccessToken={MAPBOX_API_SECRET_KEY}
