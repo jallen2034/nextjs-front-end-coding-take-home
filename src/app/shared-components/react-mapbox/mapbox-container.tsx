@@ -27,6 +27,7 @@ import {
   clusterLayer,
   unclusteredPointLayer,
 } from "@/app/shared-components/react-mapbox/mapbox-styles";
+import mapboxgl from "mapbox-gl";
 
 // Encapsulates the Mapbox map and is reusable across the Next.js app.
 const MapboxContainer = ({ records }: MapBoxContainerProps) => {
@@ -136,7 +137,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       );
     }
   }, [features, selectedPropertyToLocateOnMap]);
-
+  
   // Logic to handle moving around the map and looking at the markers.
   const onMove = useCallback(
     ({
@@ -152,7 +153,33 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     [],
   );
   
-  console.log("memoizedGeoJsonData: ", memoizedGeoJsonData)
+  // useEffect(() => {
+  //   const map = mapRef.current;
+  //
+  //   if (map) {
+  //     // Add event listener for unclustered points
+  //     map.on('click', 'unclustered-point', (e) => {
+  //       const coordinates = e.features[0].geometry.coordinates.slice();
+  //       const mag = e.features[0].properties.mag;
+  //       const tsunami = e.features[0].properties.tsunami === 1 ? 'yes' : 'no';
+  //
+  //       // Make sure popup appears above the clicked marker
+  //       while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+  //         coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+  //       }
+  //
+  //       new mapboxgl.Popup()
+  //       .setLngLat(coordinates)
+  //       .setHTML(`Magnitude: ${mag}<br>Was there a tsunami?: ${tsunami}`)
+  //       .addTo(map);
+  //     });
+  //
+  //     // Clean up the event listener on unmount
+  //     return () => {
+  //       map.off('click', 'unclustered-point');
+  //     };
+  //   }
+  // }, [mapRef, memoizedGeoJsonData]);
   
   return (
     <div className="mapbox-container">
