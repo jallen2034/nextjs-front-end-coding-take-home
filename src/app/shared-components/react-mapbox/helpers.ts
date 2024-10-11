@@ -5,6 +5,10 @@ import {
   GeoJSONFeatureCollection,
   SlidingWindowPointers,
 } from "@/app/shared-components/react-mapbox/types";
+import { RefObject } from "react";
+import { MapRef } from "react-map-gl";
+import bbox from "@turf/bbox";
+import { MapMouseEvent } from "mapbox-gl"; // Import the bbox utility to calculate bounding boxes.
 
 const lowerMainlandBounds: [number, number, number, number] = [
   -123.6,
@@ -47,31 +51,96 @@ const getPreviousIndicesForWindow = (
  * and convert it into  an array of markers to render on the map. */
 const generateGeoJsonDataFromMemoizedRecords = (
   memoizedRecords: ResaleDataFromAPI,
+  selectedPropertyId: string | null,
 ): GeoJSONFeatureCollection => {
-  // Map over the records to create GeoJSON features.
   const features: Feature[] = memoizedRecords.map((property: Property) => {
-    const { longitude, latitude }: Property = property;
+    const { longitude, latitude, id }: Property = property;
+
+    // Determine icon size based on whether the property is selected
+    const isSelected: boolean = selectedPropertyId === id;
 
     return {
-      type: "Feature", // Each feature must have a type.
+      type: "Feature",
       geometry: {
-        type: "Point", // The geometry type is Point.
+        type: "Point",
         coordinates: [parseFloat(longitude), parseFloat(latitude)],
       },
-      properties: property,
+      properties: {
+        ...property,
+        isSelected,
+      },
     };
   });
 
-  // Return the GeoJSON FeatureCollection.
   return {
     type: "FeatureCollection",
     features,
   };
 };
 
+// Helper function to take the ref to the map and zoom the map to the selected property.
+const zoomToSelectedProperty = (
+  selectedFeature: Feature,
+  mapRef: RefObject<MapRef>,
+): void => {
+  if (selectedFeature && mapRef.current) {
+    // @ts-expect-error: todo: fix this TS error with bbox wanting a correct Feature type def.
+    const [minLng, minLat, maxLng, maxLat] = bbox(selectedFeature);
+    
+    // Fit the map to the bounding box.
+    mapRef.current.fitBounds(
+      [
+        [minLng, minLat],
+        [maxLng, maxLat],
+      ],
+      { padding: 40, duration: 1000 },
+    );
+  }
+};
+
+export const setupMapListeners = (
+  map: MapRef,
+  setSelectedPropertyToLocateOnMap: (id: string) => void
+) => {
+  const handleClick = (e: MapMouseEvent): void => {
+    if (!e.features) return;
+    const properties: Property = e.features[0].properties as Property;
+    const { id }: Property = properties;
+    setSelectedPropertyToLocateOnMap(id);
+  };
+  
+  const handleMouseEnter = (): void => {
+    map.getCanvas().style.cursor = "pointer"; // Change cursor to pointer
+  };
+  
+  const handleMouseLeave = (): void => {
+    map.getCanvas().style.cursor = ""; // Reset cursor style.
+    // @ts-ignore
+    map.off("mouseenter", "unclustered-point"); // Clean up mouse enter listener.
+    // @ts-ignore
+    map.off("mouseleave", "unclustered-point"); // Clean up mouse leave listener.
+  };
+  
+  // Attach event listeners
+  map.on("click", "unclustered-point", handleClick);
+  map.on("mouseenter", "unclustered-point", handleMouseEnter);
+  map.on("mouseleave", "unclustered-point", handleMouseLeave);
+  
+  // Return cleanup function
+  return () => {
+    // @ts-ignore
+    map.off("click", "unclustered-point");
+    // @ts-ignore
+    map.off("mouseenter", "unclustered-point");
+    // @ts-ignore
+    map.off("mouseleave", "unclustered-point");
+  };
+};
+
 export {
   lowerMainlandBounds,
   generateGeoJsonDataFromMemoizedRecords,
+  zoomToSelectedProperty,
   getNextIndicesForWindow,
   getPreviousIndicesForWindow,
 };
