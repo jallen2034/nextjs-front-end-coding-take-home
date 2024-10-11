@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import {
   RefObject,
   useCallback,
@@ -8,10 +9,10 @@ import {
   useRef,
   useState,
 } from "react";
-import * as React from "react";
-import Map, { ViewStateChangeEvent, Source, Layer, MapRef } from "react-map-gl";
+import Map, { Layer, MapRef, Source, ViewStateChangeEvent } from "react-map-gl";
 import { MAPBOX_API_SECRET_KEY } from "@/app/apiUtils";
 import {
+  calculateWindowLocationWhenMarkerClicked,
   generateGeoJsonDataFromMemoizedRecords,
   getNextIndicesForWindow,
   getPreviousIndicesForWindow,
@@ -24,6 +25,7 @@ import {
   GeoJSONFeatureCollection,
   MapBoxContainerProps,
   MapViewState,
+  NewWindowPointers,
   SlidingWindowPointers,
 } from "@/app/shared-components/react-mapbox/types";
 import { PropertyListItem } from "@/app/shared-components/property-list-item/property-list-item";
@@ -38,34 +40,32 @@ import {
 
 // Encapsulates the Mapbox map and is reusable across the Next.js app.
 const MapboxContainer = ({ records }: MapBoxContainerProps) => {
-  // Number of items per page.
+  // Configuration for pagination.
   const itemsPerPage: number = 10;
-  const maxVisibleFeatures: number = 20;
+  const maxVisibleFeatures: number = 10;
 
-  // Create a reference for the Map component.
+  // Reference to the Map component.
   const mapRef: RefObject<MapRef> = useRef<MapRef>(null);
 
-  // All state to keep track of in this component. note: if this gets too complex, might be worth using a custom hook.
+  // State management for the map's view.
   const [viewState, setViewState] = useState<MapViewState>({
     longitude: -123.1207,
     latitude: 49.2827,
     zoom: 9.5,
   });
 
-  // State to keep track of the left and right pointer for the sliding window keeping track of the visible features.
+  // Track the left and right indices for the sliding window to build the current array of visible features to render.
   const [slidingWindowForVisibleFeatures, setSlidingWindowForVisibleFeatures] =
-    useState<SlidingWindowPointers>({
-      leftIdx: 0,
-      rightIdx: 19,
-    });
+    useState<SlidingWindowPointers>({ leftIdx: 0, rightIdx: 9 });
 
-  // Add a state variable for selected property ID to "zero in on" the map.
+  // State to keep track of the selected property ID of a marker that is clicked on the map.
   const [selectedPropertyToLocateOnMap, setSelectedPropertyToLocateOnMap] =
     useState<string | null>(null);
 
-  // State to load a smaller array of 20 items from the 4000 features as the sliding window goes across it.
+  // Array to store the currently visible features. Calculated within bounds of the left + right pointer of the window.
   const [visibleFeatures, setVisibleFeatures] = useState<Feature[]>([]);
 
+  // Memoized GeoJSON data derived from the records.
   const memoizedGeoJsonData: GeoJSONFeatureCollection =
     useMemo((): GeoJSONFeatureCollection => {
       return generateGeoJsonDataFromMemoizedRecords(
@@ -74,66 +74,103 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       );
     }, [records, selectedPropertyToLocateOnMap]);
 
-  // Destructure properties we want from the memoizedGeoJsonData.
+  // Destructure properties from the memoized GeoJSON data.
   const { features }: GeoJSONFeatureCollection = memoizedGeoJsonData;
   const { length }: Feature[] = features;
 
-  // Effect hook to update the visible features based on the current state of the sliding window.
-  useEffect((): void => {
+  // Effect hook to update visible features based on the sliding window state.
+  useEffect(() => {
     if (length) {
       const { leftIdx, rightIdx } = slidingWindowForVisibleFeatures;
-      const newVisibleFeatures: Feature[] = features.slice(leftIdx, rightIdx + 1);
+      const newVisibleFeatures: Feature[] = features.slice(
+        leftIdx,
+        rightIdx + 1,
+      );
       setVisibleFeatures(newVisibleFeatures);
     }
   }, [features, length, slidingWindowForVisibleFeatures]);
 
-  // Effect to handle zooming to a selected property on the map.
-  useEffect((): void => {
+  // Effect to zoom in on the selected property when it is changed.
+  useEffect(() => {
     if (!selectedPropertyToLocateOnMap) return;
-    
+
     const selectedFeature: Feature | undefined = features.find(
       (feature: Feature): boolean =>
         feature.properties.id === selectedPropertyToLocateOnMap,
     );
-    
+
     if (selectedFeature) {
       zoomToSelectedProperty(selectedFeature, mapRef);
     }
   }, [features, selectedPropertyToLocateOnMap, mapRef]);
 
-  // Effect and lister to handle when a marker is clicked on in the map and pluck out it's info.
+  // Effect to set up event listeners for marker clicks.
   useEffect(() => {
     const map: MapRef | null = mapRef.current;
-    
-    if (map) {
-      const cleanup = setupMapListeners(map, setSelectedPropertyToLocateOnMap);
-      return cleanup; // Call the cleanup function when the component unmounts or when map changes.
-    }
-  }, [mapRef, memoizedGeoJsonData, setSelectedPropertyToLocateOnMap]);
 
-  // Helper function to load the next set of items, and slide the window over features right.
+    if (map) {
+      // Cleanup function to run on unmount or when map changes.
+      return setupMapListeners(map, setSelectedPropertyToLocateOnMap);
+    }
+  }, [
+    features,
+    mapRef,
+    memoizedGeoJsonData,
+    selectedPropertyToLocateOnMap,
+    setSelectedPropertyToLocateOnMap,
+  ]);
+
+  // Effect to adjust the sliding window based on the selected map marker/property.
+  useEffect(() => {
+    const windowPointers: NewWindowPointers | undefined = calculateWindowLocationWhenMarkerClicked(
+      selectedPropertyToLocateOnMap,
+      features,
+      maxVisibleFeatures,
+    );
+
+    // Update the correct indices to move our sliding window to if we find the selected marker exists in the features array.
+    if (windowPointers) {
+      const { newLeftIdx, newRightIdx }: NewWindowPointers = windowPointers;
+      setSlidingWindowForVisibleFeatures({
+        leftIdx: newLeftIdx,
+        rightIdx: newRightIdx,
+      });
+    }
+  }, [selectedPropertyToLocateOnMap, features, maxVisibleFeatures]);
+
+  // Helper function to load the next set of items in the sliding window.
   const loadNextItems = useCallback((): void => {
     const { rightIdx }: SlidingWindowPointers = slidingWindowForVisibleFeatures;
-    
+
     if (rightIdx < length - 1) {
       setSlidingWindowForVisibleFeatures(
-        getNextIndicesForWindow(rightIdx, itemsPerPage, maxVisibleFeatures, length),
+        getNextIndicesForWindow(
+          rightIdx,
+          itemsPerPage,
+          maxVisibleFeatures,
+          length,
+        ),
       );
     }
   }, [length, slidingWindowForVisibleFeatures]);
 
-  // Helper function to load the previous set of items, and slide the window over features left.
+  // Helper function to load the previous set of items in the sliding window.
   const loadPreviousItems = useCallback((): void => {
     const { leftIdx }: SlidingWindowPointers = slidingWindowForVisibleFeatures;
-    
+
     if (leftIdx > 0) {
       setSlidingWindowForVisibleFeatures(
-        getPreviousIndicesForWindow(leftIdx, itemsPerPage, maxVisibleFeatures, length),
+        getPreviousIndicesForWindow(
+          leftIdx,
+          itemsPerPage,
+          maxVisibleFeatures,
+          length,
+        ),
       );
     }
   }, [length, slidingWindowForVisibleFeatures]);
 
-  // Logic to handle moving around the map and looking at the markers.
+  // Handler for map movements to update the view state.
   const onMove = useCallback(
     ({
       viewState: { longitude, latitude, zoom },
@@ -142,7 +179,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
         ...prev,
         longitude,
         latitude,
-        zoom: Math.min(Math.max(zoom, 10), 15),
+        zoom: Math.min(Math.max(zoom, 10), 15), // Clamp zoom level between 10 and 15.
       }));
     },
     [],
@@ -150,30 +187,32 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
 
   return (
     <div className="mapbox-container">
-      {/* Container containing the map and markers rendered on it for each property. */}
+      {/* Render the Map component with markers and the property list */}
       <Map
-        ref={mapRef} // Attach the ref to interact with the map instance directly.
+        ref={mapRef} // Reference to interact with the map instance directly.
         {...viewState}
         onMove={onMove}
         mapboxAccessToken={MAPBOX_API_SECRET_KEY}
         style={{ width: "100%", height: 400 }}
-        maxBounds={lowerMainlandBounds}
-        mapStyle="mapbox://styles/mapbox/standard" // Updated to use the Mapbox Light style.
-        interactiveLayerIds={[clusterLayer.id]}
+        maxBounds={lowerMainlandBounds} // Restrict map bounds to lower mainland.
+        mapStyle="mapbox://styles/mapbox/standard" // Use Mapbox standard style.
+        interactiveLayerIds={[clusterLayer.id]} // Enable interaction with cluster layer.
       >
         <Source
           id="records"
           type="geojson"
-          data={memoizedGeoJsonData}
-          cluster={true}
-          clusterMaxZoom={14}
-          clusterRadius={50}
+          data={memoizedGeoJsonData} // Provide the map the memoized GeoJSON data.
+          cluster={true} // Enable clustering of points.
+          clusterMaxZoom={14} // Set max zoom level for clustering.
+          clusterRadius={50} // Set the radius for clustering.
         >
           <Layer {...clusterLayer} />
           <Layer {...clusterCountLayer} />
           <Layer {...unclusteredPointLayer} />
         </Source>
       </Map>
+
+      {/* Render the list of properties based on the currently visible features */}
       <div className="property-list">
         {visibleFeatures.length > 0 &&
           visibleFeatures.map((feature: Feature) => (
@@ -186,8 +225,9 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
             />
           ))}
       </div>
+
+      {/* Pagination buttons for loading more items */}
       <div className="next-prev-button-container">
-        {/* Load Previous and Next buttons */}
         <Box
           className="pagination-buttons"
           display="flex"
@@ -195,7 +235,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
         >
           <Button
             onClick={loadPreviousItems}
-            disabled={slidingWindowForVisibleFeatures.leftIdx === 0}
+            disabled={slidingWindowForVisibleFeatures.leftIdx === 0} // Disable if window is at the start of the paginated list.
             className="back-forward-button"
           >
             Load Previous {itemsPerPage}
@@ -203,7 +243,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
           <Button
             onClick={loadNextItems}
             disabled={
-              slidingWindowForVisibleFeatures.rightIdx >= features.length - 1
+              slidingWindowForVisibleFeatures.rightIdx >= features.length - 1 // Disable if window is at the end of the paginated list.
             }
             className="back-forward-button"
           >

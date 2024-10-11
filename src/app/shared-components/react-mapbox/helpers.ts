@@ -1,9 +1,7 @@
 // Define bounds for the Lower Mainland (northwest and southeast corners).
 import { Property, ResaleDataFromAPI } from "@/app/map/types";
 import {
-  Feature,
-  GeoJSONFeatureCollection,
-  SlidingWindowPointers,
+  Feature, GeoJSONFeatureCollection, NewWindowPointers, SlidingWindowPointers,
 } from "@/app/shared-components/react-mapbox/types";
 import { RefObject } from "react";
 import { MapRef } from "react-map-gl";
@@ -98,22 +96,48 @@ const zoomToSelectedProperty = (
   }
 };
 
-export const setupMapListeners = (
+const calculateWindowLocationWhenMarkerClicked = (
+  id: string | null,
+  features: Feature[],
+  maxVisibleFeatures: number
+): NewWindowPointers | undefined => {
+  // Find the index of the clicked marker in the features list.
+  const clickedFeatureIndex: number = features.findIndex(
+    (feature: Feature) => feature.properties.id === id
+  );
+  
+  if (clickedFeatureIndex === -1) return; // Feature not found
+  
+  // Calculate new window indices
+  const newLeftIdx: number = Math.max(
+    Math.floor(clickedFeatureIndex / maxVisibleFeatures) * maxVisibleFeatures,
+    0
+  );
+  
+  const newRightIdx: number = Math.min(
+    newLeftIdx + maxVisibleFeatures - 1,
+    features.length - 1
+  );
+  
+  return { newLeftIdx, newRightIdx };
+};
+
+const setupMapListeners = (
   map: MapRef,
   setSelectedPropertyToLocateOnMap: (id: string) => void
 ) => {
-  const handleClick = (e: MapMouseEvent): void => {
+  const handleMarkerClickListener = (e: MapMouseEvent): void => {
     if (!e.features) return;
     const properties: Property = e.features[0].properties as Property;
     const { id }: Property = properties;
-    setSelectedPropertyToLocateOnMap(id);
+    setSelectedPropertyToLocateOnMap(id); // Set the clicked marker's ID to be the selected property on the map.
   };
   
-  const handleMouseEnter = (): void => {
+  const handleMouseHoverListener = (): void => {
     map.getCanvas().style.cursor = "pointer"; // Change cursor to pointer
   };
   
-  const handleMouseLeave = (): void => {
+  const handleMouseLeaveListener = (): void => {
     map.getCanvas().style.cursor = ""; // Reset cursor style.
     // @ts-ignore
     map.off("mouseenter", "unclustered-point"); // Clean up mouse enter listener.
@@ -121,10 +145,10 @@ export const setupMapListeners = (
     map.off("mouseleave", "unclustered-point"); // Clean up mouse leave listener.
   };
   
-  // Attach event listeners
-  map.on("click", "unclustered-point", handleClick);
-  map.on("mouseenter", "unclustered-point", handleMouseEnter);
-  map.on("mouseleave", "unclustered-point", handleMouseLeave);
+  // Attach event listeners to the map ref.
+  map.on("click", "unclustered-point", handleMarkerClickListener);
+  map.on("mouseenter", "unclustered-point", handleMouseHoverListener);
+  map.on("mouseleave", "unclustered-point", handleMouseLeaveListener);
   
   // Return cleanup function
   return () => {
@@ -143,4 +167,6 @@ export {
   zoomToSelectedProperty,
   getNextIndicesForWindow,
   getPreviousIndicesForWindow,
+  setupMapListeners,
+  calculateWindowLocationWhenMarkerClicked
 };
