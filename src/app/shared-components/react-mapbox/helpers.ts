@@ -47,22 +47,27 @@ const getPreviousIndicesForWindow = (
  * and convert it into  an array of markers to render on the map. */
 const generateGeoJsonDataFromMemoizedRecords = (
   memoizedRecords: ResaleDataFromAPI,
+  selectedPropertyId: string | null,
 ): GeoJSONFeatureCollection => {
-  // Map over the records to create GeoJSON features.
   const features: Feature[] = memoizedRecords.map((property: Property) => {
-    const { longitude, latitude }: Property = property;
-
+    const { longitude, latitude, id }: Property = property;
+    
+    // Determine icon size based on whether the property is selected
+    const isSelected: boolean = selectedPropertyId === id;
+    
     return {
-      type: "Feature", // Each feature must have a type.
+      type: "Feature",
       geometry: {
-        type: "Point", // The geometry type is Point.
+        type: "Point",
         coordinates: [parseFloat(longitude), parseFloat(latitude)],
       },
-      properties: property,
+      properties: {
+        ...property,
+        isSelected,
+      },
     };
   });
-
-  // Return the GeoJSON FeatureCollection.
+  
   return {
     type: "FeatureCollection",
     features,

@@ -15,6 +15,7 @@ export interface Property {
   address: string;
   latitude: string;
   longitude: string;
+  isSelected: boolean
 }
 
 export type ResaleDataFromAPI = Property[];

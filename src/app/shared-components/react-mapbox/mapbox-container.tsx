@@ -30,37 +30,43 @@ import {
 
 // Encapsulates the Mapbox map and is reusable across the Next.js app.
 const MapboxContainer = ({ records }: MapBoxContainerProps) => {
-  const memoizedGeoJsonData: GeoJSONFeatureCollection =
-    useMemo((): GeoJSONFeatureCollection => {
-      return generateGeoJsonDataFromMemoizedRecords(records);
-    }, [records]);
-  
   // Create a reference for the Map component
   const mapRef: RefObject<MapRef> = useRef<MapRef>(null);
-
-  // Destructure properties we want from the memoizedGeoJsonData.
-  const { features }: GeoJSONFeatureCollection = memoizedGeoJsonData;
-  const { length }: Feature[] = features;
-
+  
   // All state to keep track of in this component. note: if this gets too complex, might be worth using a custom hook.
   const [viewState, setViewState] = useState<MapViewState>({
     longitude: -123.1207,
     latitude: 49.2827,
     zoom: 9.5,
   });
+  
+  // State to keep track of the left and right pointer for the sliding window keeping track of the visible features.
   const [slidingWindowForVisibleFeatures, setSlidingWindowForVisibleFeatures] =
     useState<SlidingWindowPointers>({
       leftIdx: 0,
       rightIdx: 19,
     });
+  
+  // Add a state variable for selected property ID.
   const [selectedPropertyToLocateOnMap, setSelectedPropertyToLocateOnMap] =
     useState<string | null>(null);
+  
+  // State to load a smaller array of 20 items from the 4000 features as the sliding window goes across it.
   const [visibleFeatures, setVisibleFeatures] = useState<Feature[]>([]);
 
   // Number of items per page.
   const itemsPerPage: number = 10;
   const maxVisibleFeatures: number = 20;
-
+  
+  const memoizedGeoJsonData: GeoJSONFeatureCollection =
+    useMemo((): GeoJSONFeatureCollection => {
+      return generateGeoJsonDataFromMemoizedRecords(records, selectedPropertyToLocateOnMap);
+    }, [records, selectedPropertyToLocateOnMap]);
+  
+  // Destructure properties we want from the memoizedGeoJsonData.
+  const { features }: GeoJSONFeatureCollection = memoizedGeoJsonData;
+  const { length }: Feature[] = features;
+  
   // Helper function to load the next set of items, and slide the window over features right.
   const loadNextItems = useCallback((): void => {
     const { rightIdx }: SlidingWindowPointers = slidingWindowForVisibleFeatures;
@@ -146,6 +152,8 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     [],
   );
   
+  console.log("memoizedGeoJsonData: ", memoizedGeoJsonData)
+  
   return (
     <div className="mapbox-container">
       {/* Container containing the map and markers rendered on it for each property. */}
@@ -156,7 +164,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
         mapboxAccessToken={MAPBOX_API_SECRET_KEY}
         style={{ width: "100%", height: 400 }}
         maxBounds={lowerMainlandBounds}
-        mapStyle="mapbox://styles/mapbox/streets-v9"
+        mapStyle="mapbox://styles/mapbox/standard" // Updated to use the Mapbox Light style
         interactiveLayerIds={[clusterLayer.id]}
       >
         <Source
@@ -172,7 +180,6 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
           <Layer {...unclusteredPointLayer} />
         </Source>
       </Map>
-
       <div className="property-list">
         {visibleFeatures.length > 0 &&
           visibleFeatures.map((feature: Feature) => (
