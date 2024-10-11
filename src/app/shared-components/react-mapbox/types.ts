@@ -35,11 +35,18 @@ interface SlidingWindowPointers {
   rightIdx: number,
 }
 
+
+interface NewWindowPointers {
+  newLeftIdx: number,
+  newRightIdx: number
+}
+
 export type {
   MapBoxContainerProps,
   OnMoveCB,
   MapViewState,
   GeoJSONFeatureCollection,
   Feature,
-  SlidingWindowPointers
+  SlidingWindowPointers,
+  NewWindowPointers
 };
