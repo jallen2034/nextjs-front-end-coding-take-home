@@ -43,26 +43,26 @@ const unclusteredPointLayer: CircleLayer = {
   source: "records",
   filter: ["!", ["has", "point_count"]],
   paint: {
-    // Set circle color for all points
+    // Set circle color for all points.
     "circle-color": "#ce175f",
     
-    // Set circle radius based on isSelected property
+    // Set circle radius based on isSelected property.
     "circle-radius": [
       "case",
       ["boolean", ["get", "isSelected"], false],
-      15, // Radius if isSelected is true
-      4,  // Radius if isSelected is false
+      15, // Radius if isSelected is true.
+      4,  // Radius if isSelected is false.
     ],
     
-    // Set stroke width for better visibility
+    // Set stroke width for better visibility.
     "circle-stroke-width": 2,
     
     // Set stroke color based on isSelected property conditionally.
     "circle-stroke-color": [
       "case",
       ["boolean", ["get", "isSelected"], false],
-      "#196cc9", // Stroke color for selected points
-      "#ce175f", // Stroke color for unselected points
+      "#196cc9", // Stroke color for if isSelected is true.
+      "#ce175f", // Stroke color for if isSelected is false.
     ],
   },
 };
