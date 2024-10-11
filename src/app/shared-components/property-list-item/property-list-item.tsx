@@ -20,11 +20,13 @@ interface PropertyListItemProps {
   setSelectedPropertyToLocateOnMap: React.Dispatch<
     React.SetStateAction<string | null>
   >;
+  isSelected: boolean
 }
 
 export const PropertyListItem = ({
   feature,
   setSelectedPropertyToLocateOnMap,
+  isSelected,
 }: PropertyListItemProps) => {
   const {
     properties: { address, bathrooms, bedrooms, date, price, id, area_sqft },
@@ -33,9 +35,12 @@ export const PropertyListItem = ({
   const handleSelect = (): void => {
     setSelectedPropertyToLocateOnMap(id);
   };
-
+  
   return (
-    <Card className="property-card">
+    <Card
+      className={`property-card ${isSelected ? "highlight" : ""}`} // Apply highlight class
+      data-id={id} // Add data-id for scrolling
+    >
       <div className="property-header">
         <Typography variant="h6" className="property-title">
           {`Property ID: ${id}`}

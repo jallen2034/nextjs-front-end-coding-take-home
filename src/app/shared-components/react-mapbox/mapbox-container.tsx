@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import {
+  MutableRefObject,
   RefObject,
   useCallback,
   useEffect,
@@ -47,6 +48,9 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   // Reference to the Map component.
   const mapRef: RefObject<MapRef> = useRef<MapRef>(null);
 
+  // Array of all the potential refs to attach to the elements generated below via visibleFeatures.
+  const propertyRefs = useRef<(HTMLDivElement | null)[]>([]);
+
   // State management for the map's view.
   const [viewState, setViewState] = useState<MapViewState>({
     longitude: -123.1207,
@@ -56,7 +60,10 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
 
   // Track the left and right indices for the sliding window to build the current array of visible features to render.
   const [slidingWindowForVisibleFeatures, setSlidingWindowForVisibleFeatures] =
-    useState<SlidingWindowPointers>({ leftIdx: 0, rightIdx: 9 });
+    useState<SlidingWindowPointers>({
+      leftIdx: 0,
+      rightIdx: 9,
+    });
 
   // State to keep track of the selected property ID of a marker that is clicked on the map.
   const [selectedPropertyToLocateOnMap, setSelectedPropertyToLocateOnMap] =
@@ -77,6 +84,27 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   // Destructure properties from the memoized GeoJSON data.
   const { features }: GeoJSONFeatureCollection = memoizedGeoJsonData;
   const { length }: Feature[] = features;
+
+  // Effect to scroll to the selected property into view when it is selected from a map marker.
+  useEffect(() => {
+    if (selectedPropertyToLocateOnMap) {
+      const index: number = visibleFeatures.findIndex(
+        (feature: Feature): boolean => feature.properties.id === selectedPropertyToLocateOnMap
+      );
+      
+      // Retrieve the property reference that matches with the ID of the property the user clicked on.
+      const propertyRef: any = propertyRefs.current[index];
+      
+      // Guard clause to check if the index is -1 (not found) or if the reference itself is invalid.
+      if (index === -1 || !propertyRef?.current) return;
+      
+      // Scroll to the referenced DOM element if valid.
+      propertyRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [features, selectedPropertyToLocateOnMap, visibleFeatures]);
 
   // Effect hook to update visible features based on the sliding window state.
   useEffect(() => {
@@ -122,11 +150,12 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
 
   // Effect to adjust the sliding window based on the selected map marker/property.
   useEffect(() => {
-    const windowPointers: NewWindowPointers | undefined = calculateWindowLocationWhenMarkerClicked(
-      selectedPropertyToLocateOnMap,
-      features,
-      maxVisibleFeatures,
-    );
+    const windowPointers: NewWindowPointers | undefined =
+      calculateWindowLocationWhenMarkerClicked(
+        selectedPropertyToLocateOnMap,
+        features,
+        maxVisibleFeatures,
+      );
 
     // Update the correct indices to move our sliding window to if we find the selected marker exists in the features array.
     if (windowPointers) {
@@ -215,17 +244,31 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       {/* Render the list of properties based on the currently visible features */}
       <div className="property-list">
         {visibleFeatures.length > 0 &&
-          visibleFeatures.map((feature: Feature) => (
-            <PropertyListItem
-              key={feature.properties.id}
-              feature={feature}
-              setSelectedPropertyToLocateOnMap={
-                setSelectedPropertyToLocateOnMap
-              }
-            />
-          ))}
-      </div>
+          visibleFeatures.map((feature: Feature, index: number) => {
+            // Assign each property ref to the corresponding index
+            // @ts-expect-error: todo: fix this typing issue
+            propertyRefs.current[index] =
+              propertyRefs.current[index] || React.createRef();
 
+            return (
+              <div
+                // @ts-expect-error: todo: fix this typing issue with this ref.
+                ref={propertyRefs.current[index]}
+                key={feature.properties.id}
+              >
+                <PropertyListItem
+                  feature={feature}
+                  setSelectedPropertyToLocateOnMap={
+                    setSelectedPropertyToLocateOnMap
+                  }
+                  isSelected={
+                    selectedPropertyToLocateOnMap === feature.properties.id
+                  }
+                />
+              </div>
+            );
+          })}
+      </div>
       {/* Pagination buttons for loading more items */}
       <div className="next-prev-button-container">
         <Box

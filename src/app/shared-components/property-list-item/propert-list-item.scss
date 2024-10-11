@@ -18,6 +18,11 @@
     background-color: #f9fafc; /* Subtle background color change */
   }
 
+  &.highlight { /* Highlighting style with blue outline */
+    border: 2px solid #007bff; /* Adjust the blue color as needed */
+    background-color: transparent; /* Ensure the background remains transparent */
+  }
+
   .property-header {
     display: flex;
     justify-content: space-between;
