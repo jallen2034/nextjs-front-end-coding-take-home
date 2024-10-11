@@ -1,7 +1,9 @@
-// Cluster Layer - https://github.com/visgl/react-map-gl/blob/7.1-release/examples/clusters/src/layers.ts
 import { CircleLayer } from "mapbox-gl";
 import { LayerProps } from "react-map-gl";
 
+// I dunno if there is a way to style the mapbox with pure SCSS lmao.
+
+// Cluster Layer - https://github.com/visgl/react-map-gl/blob/7.1-release/examples/clusters/src/layers.ts
 const clusterLayer: CircleLayer = {
   id: "clusters",
   type: "circle",

@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as React from "react";
-import Map, { ViewStateChangeEvent, Source, Layer } from "react-map-gl";
+import Map, { ViewStateChangeEvent, Source, Layer, MapRef } from "react-map-gl";
 import { MAPBOX_API_SECRET_KEY } from "@/app/apiUtils";
 import {
   generateGeoJsonDataFromMemoizedRecords,
@@ -21,6 +21,7 @@ import { PropertyListItem } from "@/app/shared-components/property-list-item/pro
 import { Box, Button } from "@mui/material";
 import "./mapbox-container.scss";
 import "mapbox-gl/dist/mapbox-gl.css";
+import bbox from "@turf/bbox"; // Import the bbox utility to calculate bounding boxes
 import {
   clusterCountLayer,
   clusterLayer,
@@ -33,9 +34,15 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     useMemo((): GeoJSONFeatureCollection => {
       return generateGeoJsonDataFromMemoizedRecords(records);
     }, [records]);
+  
+  // Create a reference for the Map component
+  const mapRef: RefObject<MapRef> = useRef<MapRef>(null);
 
+  // Destructure properties we want from the memoizedGeoJsonData.
   const { features }: GeoJSONFeatureCollection = memoizedGeoJsonData;
+  const { length }: Feature[] = features;
 
+  // All state to keep track of in this component. note: if this gets too complex, might be worth using a custom hook.
   const [viewState, setViewState] = useState<MapViewState>({
     longitude: -123.1207,
     latitude: 49.2827,
@@ -46,7 +53,8 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       leftIdx: 0,
       rightIdx: 19,
     });
-
+  const [selectedPropertyToLocateOnMap, setSelectedPropertyToLocateOnMap] =
+    useState<string | null>(null);
   const [visibleFeatures, setVisibleFeatures] = useState<Feature[]>([]);
 
   // Number of items per page.
@@ -56,17 +64,17 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   // Helper function to load the next set of items, and slide the window over features right.
   const loadNextItems = useCallback((): void => {
     const { rightIdx }: SlidingWindowPointers = slidingWindowForVisibleFeatures;
-    if (rightIdx < features.length - 1) {
+    if (rightIdx < length - 1) {
       setSlidingWindowForVisibleFeatures(
         getNextIndicesForWindow(
           rightIdx,
           itemsPerPage,
           maxVisibleFeatures,
-          features.length,
+          length,
         ),
       );
     }
-  }, [features.length, slidingWindowForVisibleFeatures]);
+  }, [length, slidingWindowForVisibleFeatures]);
 
   // Helper function to load the previous set of items, and slide the window over features left.
   const loadPreviousItems = useCallback((): void => {
@@ -77,15 +85,15 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
           leftIdx,
           itemsPerPage,
           maxVisibleFeatures,
-          features.length,
+          length,
         ),
       );
     }
-  }, [features.length, slidingWindowForVisibleFeatures]);
+  }, [length, slidingWindowForVisibleFeatures]);
 
   // Effect hook to update the visible features based on the current state of the sliding window.
   useEffect((): void => {
-    if (features.length) {
+    if (length) {
       const { leftIdx, rightIdx } = slidingWindowForVisibleFeatures;
       const newVisibleFeatures: Feature[] = features.slice(
         leftIdx,
@@ -93,7 +101,35 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       );
       setVisibleFeatures(newVisibleFeatures);
     }
-  }, [features, slidingWindowForVisibleFeatures]);
+  }, [features, length, slidingWindowForVisibleFeatures]);
+
+  // Effect to listen for when 'selectedPropertyToLocateOnMap' changes, and "zero in" the map to that marker
+  // https://github.com/visgl/react-map-gl/blob/7.1-release/examples/zoom-to-bounds/src/app.tsx
+  useEffect((): void => {
+    if (!selectedPropertyToLocateOnMap) {
+      return;
+    }
+    
+    const selectedFeature: Feature | undefined = features.find(
+      (feature: Feature): boolean =>
+        feature.properties.id === selectedPropertyToLocateOnMap,
+    );
+    
+    if (selectedFeature && mapRef.current) {
+      // Calculate the bounding box of the selected feature
+      // @ts-expect-error: todo: fix this TS error with bbox wanting a correct Feature type def.
+      const [minLng, minLat, maxLng, maxLat] = bbox(selectedFeature);
+      
+      // Fit the map to the bounding box.
+      mapRef.current.fitBounds(
+        [
+          [minLng, minLat],
+          [maxLng, maxLat]
+        ],
+        { padding: 40, duration: 1000 } // Adjust padding and duration as needed.
+      );
+    }
+  }, [features, selectedPropertyToLocateOnMap]);
 
   // Logic to handle moving around the map and looking at the markers.
   const onMove = useCallback(
@@ -109,34 +145,12 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     },
     [],
   );
-
-  /* Onclick handler with the logic to cluster the map markers for properties on variable rates of zooming.
-   * https://visgl.github.io/react-map-gl/examples/clusters */
-  const onClick = (event: any) => {
-    const feature: any = event.features[0];
-    const clusterId: any = feature.properties.cluster_id;
-
-    const mapboxSource: any = event.target.getSource("records");
-
-    mapboxSource.getClusterExpansionZoom(
-      clusterId,
-      (err: any, zoom: any): void => {
-        if (err) return;
-
-        setViewState((prev) => ({
-          ...prev,
-          longitude: feature.geometry.coordinates[0],
-          latitude: feature.geometry.coordinates[1],
-          zoom,
-        }));
-      },
-    );
-  };
-
+  
   return (
     <div className="mapbox-container">
       {/* Container containing the map and markers rendered on it for each property. */}
       <Map
+        ref={mapRef} // Attach the ref to the Map component.
         {...viewState}
         onMove={onMove}
         mapboxAccessToken={MAPBOX_API_SECRET_KEY}
@@ -144,7 +158,6 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
         maxBounds={lowerMainlandBounds}
         mapStyle="mapbox://styles/mapbox/streets-v9"
         interactiveLayerIds={[clusterLayer.id]}
-        onClick={onClick}
       >
         <Source
           id="records"
@@ -163,7 +176,13 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       <div className="property-list">
         {visibleFeatures.length > 0 &&
           visibleFeatures.map((feature: Feature) => (
-            <PropertyListItem key={feature.properties.id} feature={feature} />
+            <PropertyListItem
+              key={feature.properties.id}
+              feature={feature}
+              setSelectedPropertyToLocateOnMap={
+                setSelectedPropertyToLocateOnMap
+              }
+            />
           ))}
       </div>
       <div className="next-prev-button-container">
