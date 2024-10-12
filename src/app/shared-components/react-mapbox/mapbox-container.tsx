@@ -50,6 +50,9 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
 
   // Array of all the potential refs to attach to the elements generated below via visibleFeatures.
   const propertyRefs = useRef<(HTMLDivElement | null)[]>([]);
+  
+  // State to delay the loading of the map by a quarter of a second to make sure I can properly load.
+  const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
 
   // State management for the map's view.
   const [viewState, setViewState] = useState<MapViewState>({
@@ -84,6 +87,16 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   // Destructure properties from the memoized GeoJSON data.
   const { features }: GeoJSONFeatureCollection = memoizedGeoJsonData;
   const { length }: Feature[] = features;
+  
+  // Effect to set isMapLoaded after a delay on mount.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMapLoaded(true);
+    }, 250); // Quarter a second delay.
+    
+    // Cleanup function to clear the timeout if the component unmounts.
+    return () => clearTimeout(timer);
+  }, []);
 
   // Effect to scroll to the selected property into view when it is selected from a map marker.
   useEffect(() => {
@@ -198,7 +211,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       );
     }
   }, [length, slidingWindowForVisibleFeatures]);
-
+  
   // Handler for map movements to update the view state.
   const onMove = useCallback(
     ({
@@ -217,36 +230,38 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   return (
     <div className="mapbox-container">
       {/* Render the Map component with markers and the property list */}
-      <Map
-        ref={mapRef} // Reference to interact with the map instance directly.
-        {...viewState}
-        onMove={onMove}
-        mapboxAccessToken={MAPBOX_API_SECRET_KEY}
-        style={{ width: "100%", height: 400 }}
-        maxBounds={lowerMainlandBounds} // Restrict map bounds to lower mainland.
-        mapStyle="mapbox://styles/mapbox/standard" // Use Mapbox standard style.
-        interactiveLayerIds={[clusterLayer.id]} // Enable interaction with cluster layer.
-      >
-        <Source
-          id="records"
-          type="geojson"
-          data={memoizedGeoJsonData} // Provide the map the memoized GeoJSON data.
-          cluster={true} // Enable clustering of points.
-          clusterMaxZoom={14} // Set max zoom level for clustering.
-          clusterRadius={50} // Set the radius for clustering.
+      {isMapLoaded && ( // Prevent: Error: Style is not loading. Only load this 1/4 second after component mount.
+        <Map
+          ref={mapRef}
+          {...viewState}
+          onMove={onMove}
+          mapboxAccessToken={MAPBOX_API_SECRET_KEY}
+          style={{ width: "100%", height: 400 }}
+          maxBounds={lowerMainlandBounds}
+          mapStyle="mapbox://styles/mapbox/standard"
+          interactiveLayerIds={[clusterLayer.id]}
         >
-          <Layer {...clusterLayer} />
-          <Layer {...clusterCountLayer} />
-          <Layer {...unclusteredPointLayer} />
-        </Source>
-      </Map>
-
+          <Source
+            id="records"
+            type="geojson"
+            data={memoizedGeoJsonData}
+            cluster={true}
+            clusterMaxZoom={14}
+            clusterRadius={50}
+          >
+            <Layer {...clusterLayer} />
+            <Layer {...clusterCountLayer} />
+            <Layer {...unclusteredPointLayer} />
+          </Source>
+        </Map>
+      )}
       {/* Render the list of properties based on the currently visible features */}
       <div className="property-list">
         {visibleFeatures.length > 0 &&
           visibleFeatures.map((feature: Feature, index: number) => {
-            // Assign each property ref to the corresponding index
-            // @ts-expect-error: todo: fix this typing issue
+            /* Assign a ref to the propertyRefs array at the current index. Or create a new ref if none
+             * exists, ensuring we can auto scroll to the correct element when visibleFeatures change.
+             * @ts-expect-error: todo: fix this typing issue */
             propertyRefs.current[index] =
               propertyRefs.current[index] || React.createRef();
 
