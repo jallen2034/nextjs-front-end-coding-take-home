@@ -92,7 +92,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsMapLoaded(true);
-    }, 250); // Quarter a second delay.
+    }, 100); // 100ms  delay.
     
     // Cleanup function to clear the timeout if the component unmounts.
     return () => clearTimeout(timer);
@@ -230,7 +230,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   return (
     <div className="mapbox-container">
       {/* Render the Map component with markers and the property list */}
-      {isMapLoaded && ( // Prevent: Error: Style is not loading. Only load this 1/4 second after component mount.
+      {isMapLoaded && ( // Prevent: Error: Style is not loading. Only load this 100 ms after component mount.
         <Map
           ref={mapRef}
           {...viewState}
