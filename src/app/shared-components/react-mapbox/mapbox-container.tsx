@@ -9,14 +9,10 @@ import {
   useRef,
   useState,
 } from "react";
-import Map, { Layer, MapRef, Source, ViewStateChangeEvent } from "react-map-gl";
-import { MAPBOX_API_SECRET_KEY } from "@/app/apiUtils";
+import { MapRef, ViewStateChangeEvent } from "react-map-gl";
 import {
   calculateWindowLocationWhenMarkerClicked,
   generateGeoJsonDataFromMemoizedRecords,
-  getNextIndicesForWindow,
-  getPreviousIndicesForWindow,
-  lowerMainlandBounds,
   setupMapListeners,
   zoomToSelectedProperty,
 } from "@/app/shared-components/react-mapbox/helpers";
@@ -28,20 +24,15 @@ import {
   NewWindowPointers,
   SlidingWindowPointers,
 } from "@/app/shared-components/react-mapbox/types";
-import { PropertyListItem } from "@/app/shared-components/property-list-item/property-list-item";
-import { Box, Button } from "@mui/material";
 import "./mapbox-container.scss";
 import "mapbox-gl/dist/mapbox-gl.css";
-import {
-  clusterCountLayer,
-  clusterLayer,
-  unclusteredPointLayer,
-} from "@/app/shared-components/react-mapbox/mapbox-styles";
+import useWindowSize from "@/app/shared-components/react-mapbox/custom-hooks/useWindowSize";
+import MapComponent from "@/app/shared-components/map-component/map-component";
+import PropertyList from "@/app/shared-components/property-list/property-list";
 
 // Encapsulates the Mapbox map and is reusable across the Next.js app.
 const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   // Configuration for pagination.
-  const itemsPerPage: number = 10;
   const maxVisibleFeatures: number = 10;
 
   // Reference to the Map component.
@@ -50,9 +41,6 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   // Array of all the potential refs to attach to the elements generated below via visibleFeatures.
   const propertyRefs = useRef<(HTMLDivElement | null)[]>([]);
   
-  // State to delay the loading of the map by a quarter of a second to make sure I can properly load.
-  const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
-
   // State management for the map's view.
   const [viewState, setViewState] = useState<MapViewState>({
     longitude: -123.1207,
@@ -87,19 +75,24 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   const { features }: GeoJSONFeatureCollection = memoizedGeoJsonData;
   const { length }: Feature[] = features;
   
+  // Custom hook to calculate the window size.
+  const { width } = useWindowSize();
+  const isDesktop: boolean = width !== undefined && width >= 992; // Assuming 992px is your breakpoint
+  
   // Effect to scroll to the selected property into view when it is selected from a map marker.
   useEffect(() => {
     if (selectedPropertyToLocateOnMap) {
       const index: number = visibleFeatures.findIndex(
-        (feature: Feature): boolean => feature.properties.id === selectedPropertyToLocateOnMap
+        (feature: Feature): boolean =>
+          feature.properties.id === selectedPropertyToLocateOnMap,
       );
-      
+
       // Retrieve the property reference that matches with the ID of the property the user clicked on.
       const propertyRef: any = propertyRefs.current[index];
-      
+
       // Guard clause to check if the index is -1 (not found) or if the reference itself is invalid.
       if (index === -1 || !propertyRef?.current) return;
-      
+
       // Scroll to the referenced DOM element if valid.
       propertyRef.current.scrollIntoView({
         behavior: "smooth",
@@ -168,38 +161,6 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       });
     }
   }, [selectedPropertyToLocateOnMap, features, maxVisibleFeatures]);
-
-  // Helper function to load the next set of items in the sliding window.
-  const loadNextItems = useCallback((): void => {
-    const { rightIdx }: SlidingWindowPointers = slidingWindowForVisibleFeatures;
-
-    if (rightIdx < length - 1) {
-      setSlidingWindowForVisibleFeatures(
-        getNextIndicesForWindow(
-          rightIdx,
-          itemsPerPage,
-          maxVisibleFeatures,
-          length,
-        ),
-      );
-    }
-  }, [length, slidingWindowForVisibleFeatures]);
-
-  // Helper function to load the previous set of items in the sliding window.
-  const loadPreviousItems = useCallback((): void => {
-    const { leftIdx }: SlidingWindowPointers = slidingWindowForVisibleFeatures;
-
-    if (leftIdx > 0) {
-      setSlidingWindowForVisibleFeatures(
-        getPreviousIndicesForWindow(
-          leftIdx,
-          itemsPerPage,
-          maxVisibleFeatures,
-          length,
-        ),
-      );
-    }
-  }, [length, slidingWindowForVisibleFeatures]);
   
   // Handler for map movements to update the view state.
   const onMove = useCallback(
@@ -215,86 +176,48 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     },
     [],
   );
-
+  
   return (
     <div className="mapbox-container">
-      {/* Render the Map component with markers and the property list */}
-      <Map
-        ref={mapRef}
-        {...viewState}
-        onMove={onMove}
-        mapboxAccessToken={MAPBOX_API_SECRET_KEY}
-        style={{ width: "100%", height: 400 }}
-        maxBounds={lowerMainlandBounds}
-        mapStyle="mapbox://styles/mapbox/standard"
-        interactiveLayerIds={[clusterLayer.id]}
-        onLoad={(): void => setIsMapLoaded(true)} // Set map loaded state on load event.
-      >
-        {isMapLoaded && (
-          <Source
-            id="records"
-            type="geojson"
-            data={memoizedGeoJsonData}
-            cluster={true}
-            clusterMaxZoom={14}
-            clusterRadius={50}
-          >
-            <Layer {...clusterLayer} />
-            <Layer {...clusterCountLayer} />
-            <Layer {...unclusteredPointLayer} />
-          </Source>
-        )}
-      </Map>
-      {/* Render the list of properties based on the currently visible features */}
-      <div className="property-list">
-        {visibleFeatures.length > 0 &&
-          visibleFeatures.map((feature: Feature, index: number) => {
-            /* Assign a ref to the propertyRefs array at the current index. Or create a new ref if none
-             * exists, ensuring we can auto scroll to the correct element when visibleFeatures change.
-             * @ts-expect-error: todo: fix this typing issue */
-            propertyRefs.current[index] =
-              propertyRefs.current[index] || React.createRef();
-
-            return (
-              <div
-                // @ts-expect-error: todo: fix this typing issue with this ref.
-                ref={propertyRefs.current[index]}
-                key={feature.properties.id}
-              >
-                <PropertyListItem
-                  feature={feature}
-                  setSelectedPropertyToLocateOnMap={setSelectedPropertyToLocateOnMap}
-                  isSelected={selectedPropertyToLocateOnMap === feature.properties.id}
-                />
-              </div>
-            );
-          })}
-      </div>
-      {/* Pagination buttons for loading more items */}
-      <div className="next-prev-button-container">
-        <Box
-          className="pagination-buttons"
-          display="flex"
-          justifyContent="space-between"
-        >
-          <Button
-            onClick={loadPreviousItems}
-            disabled={slidingWindowForVisibleFeatures.leftIdx === 0} // Disable if window is at the start of the paginated list.
-            className="back-forward-button"
-          >
-            Load Previous {itemsPerPage}
-          </Button>
-          <Button
-            onClick={loadNextItems}
-            disabled={
-              slidingWindowForVisibleFeatures.rightIdx >= features.length - 1 // Disable if window is at the end of the paginated list.
-            }
-            className="back-forward-button"
-          >
-            Load Next {itemsPerPage}
-          </Button>
-        </Box>
-      </div>
+      {isDesktop ? (
+        <>
+          <PropertyList
+            {...{
+              visibleFeatures,
+              propertyRefs,
+              setSelectedPropertyToLocateOnMap,
+              selectedPropertyToLocateOnMap
+            }}
+          />
+          <MapComponent
+            {...{
+              viewState,
+              mapRef,
+              memoizedGeoJsonData,
+              onMove
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <MapComponent
+            {...{
+              viewState,
+              mapRef,
+              memoizedGeoJsonData,
+              onMove
+            }}
+          />
+          <PropertyList
+            {...{
+              visibleFeatures,
+              propertyRefs,
+              setSelectedPropertyToLocateOnMap,
+              selectedPropertyToLocateOnMap
+            }}
+          />
+        </>
+      )}
     </div>
   );
 };

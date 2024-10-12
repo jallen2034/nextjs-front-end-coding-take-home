@@ -2,25 +2,38 @@
 
 .mapbox-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* Keep the column layout for mobile */
+  height: 100vh;
+  overflow: hidden;
 
-  .property-list {
-    max-height: 28rem;
+  .map-wrapper {
+    flex: 0 0 40%; /* 60% height on mobile */
+    position: relative;
+    height: 100%;
+  }
+
+  .property-list-container {
+    flex: 0 0 60%; /* 40% height on mobile */
     overflow-y: auto;
-    margin-top: 16px;
     padding: 16px;
     background-color: #f8f9fa;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .property-list {
+      padding: 16px 0;
+    }
   }
 
-  .next-prev-button-container {
-    margin-top: 1rem;
-    min-height: 4rem;
+  @media (min-width: 992px) {
+    flex-direction: row; /* Switch to row layout for desktop screens */
 
-    .back-forward-button {
-      @include generic-next-back-button;
+    .map-wrapper {
+      flex: 0 0 60%; /* 60% width on desktop */
+    }
+
+    .property-list-container {
+      flex: 0 0 40%; /* 40% width on desktop */
     }
   }
 }
-

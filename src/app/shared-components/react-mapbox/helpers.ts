@@ -15,36 +15,6 @@ const lowerMainlandBounds: [number, number, number, number] = [
   49.6, // Northeast bound (longitude, latitude) - Extended
 ];
 
-// Helper function to get new indices for the sliding window when its moving right in the list of features.
-const getNextIndicesForWindow = (
-  rightIdx: number,
-  itemsPerPage: number,
-  maxVisibleFeatures: number,
-  totalFeatures: number,
-): SlidingWindowPointers => {
-  const newRightIdx: number = Math.min(
-    rightIdx + itemsPerPage,
-    totalFeatures - 1,
-  );
-  const newLeftIdx: number = Math.max(newRightIdx - maxVisibleFeatures + 1, 0);
-  return { leftIdx: newLeftIdx, rightIdx: newRightIdx };
-};
-
-// Helper function to get new indices for the sliding window when its moving left in the list of features.
-const getPreviousIndicesForWindow = (
-  leftIdx: number,
-  itemsPerPage: number,
-  maxVisibleFeatures: number,
-  totalFeatures: number,
-): SlidingWindowPointers => {
-  const newLeftIdx: number = Math.max(leftIdx - itemsPerPage, 0);
-  const newRightIdx: number = Math.min(
-    newLeftIdx + maxVisibleFeatures - 1,
-    totalFeatures - 1,
-  );
-  return { leftIdx: newLeftIdx, rightIdx: newRightIdx };
-};
-
 /* Helper function to take in our CSV data from the API on page load
  * and convert it into  an array of markers to render on the map. */
 const generateGeoJsonDataFromMemoizedRecords = (
@@ -96,6 +66,13 @@ const zoomToSelectedProperty = (
   }
 };
 
+/* Calculates new indices for a sliding window of visible features based on the index of the clicked property in the features array.
+ * This function adjusts the currently displayed features in the UI when a property is clicked on the map, ensuring that the selected
+ * feature is included within the visible range. If the clicked property falls within the indices (0-9) of the current window,
+ * the window remains unchanged. If the clicked property is located outside this range, the window shifts to include it; for instance,
+ * if the clicked property is at index 24, the window will move to display properties from indices 20 to 29.
+ * This approach is used instead of rendering all properties in the list (over 4000 in total), which would lead to performance issues
+ * in the UI. By maintaining a sliding window of visible features, we optimize rendering and ensure a smoother user experience. */
 const calculateWindowLocationWhenMarkerClicked = (
   id: string | null,
   features: Feature[],
@@ -108,7 +85,7 @@ const calculateWindowLocationWhenMarkerClicked = (
   
   if (clickedFeatureIndex === -1) return; // Feature not found
   
-  // Calculate new window indices
+  // Calculate new indices  in the sliding window.
   const newLeftIdx: number = Math.max(
     Math.floor(clickedFeatureIndex / maxVisibleFeatures) * maxVisibleFeatures,
     0
@@ -165,8 +142,6 @@ export {
   lowerMainlandBounds,
   generateGeoJsonDataFromMemoizedRecords,
   zoomToSelectedProperty,
-  getNextIndicesForWindow,
-  getPreviousIndicesForWindow,
   setupMapListeners,
   calculateWindowLocationWhenMarkerClicked
 };
