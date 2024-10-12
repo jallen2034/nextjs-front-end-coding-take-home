@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  MutableRefObject,
   RefObject,
   useCallback,
   useEffect,
@@ -88,16 +87,6 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   const { features }: GeoJSONFeatureCollection = memoizedGeoJsonData;
   const { length }: Feature[] = features;
   
-  // Effect to set isMapLoaded after a delay on mount.
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsMapLoaded(true);
-    }, 100); // 100ms  delay.
-    
-    // Cleanup function to clear the timeout if the component unmounts.
-    return () => clearTimeout(timer);
-  }, []);
-
   // Effect to scroll to the selected property into view when it is selected from a map marker.
   useEffect(() => {
     if (selectedPropertyToLocateOnMap) {
@@ -230,17 +219,18 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   return (
     <div className="mapbox-container">
       {/* Render the Map component with markers and the property list */}
-      {isMapLoaded && ( // Prevent: Error: Style is not loading. Only load this 100 ms after component mount.
-        <Map
-          ref={mapRef}
-          {...viewState}
-          onMove={onMove}
-          mapboxAccessToken={MAPBOX_API_SECRET_KEY}
-          style={{ width: "100%", height: 400 }}
-          maxBounds={lowerMainlandBounds}
-          mapStyle="mapbox://styles/mapbox/standard"
-          interactiveLayerIds={[clusterLayer.id]}
-        >
+      <Map
+        ref={mapRef}
+        {...viewState}
+        onMove={onMove}
+        mapboxAccessToken={MAPBOX_API_SECRET_KEY}
+        style={{ width: "100%", height: 400 }}
+        maxBounds={lowerMainlandBounds}
+        mapStyle="mapbox://styles/mapbox/standard"
+        interactiveLayerIds={[clusterLayer.id]}
+        onLoad={(): void => setIsMapLoaded(true)} // Set map loaded state on load event.
+      >
+        {isMapLoaded && (
           <Source
             id="records"
             type="geojson"
@@ -253,8 +243,8 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
             <Layer {...clusterCountLayer} />
             <Layer {...unclusteredPointLayer} />
           </Source>
-        </Map>
-      )}
+        )}
+      </Map>
       {/* Render the list of properties based on the currently visible features */}
       <div className="property-list">
         {visibleFeatures.length > 0 &&
@@ -273,12 +263,8 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
               >
                 <PropertyListItem
                   feature={feature}
-                  setSelectedPropertyToLocateOnMap={
-                    setSelectedPropertyToLocateOnMap
-                  }
-                  isSelected={
-                    selectedPropertyToLocateOnMap === feature.properties.id
-                  }
+                  setSelectedPropertyToLocateOnMap={setSelectedPropertyToLocateOnMap}
+                  isSelected={selectedPropertyToLocateOnMap === feature.properties.id}
                 />
               </div>
             );
