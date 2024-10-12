@@ -2,6 +2,7 @@ import { Dispatch, FC, RefObject, SetStateAction } from "react";
 import { PropertyListItem } from "@/app/shared-components/property-list-item/property-list-item";
 import { Feature } from "@/app/shared-components/react-mapbox/types";
 import * as React from "react";
+import "./property-list.scss";
 
 interface PropertyListProps {
   visibleFeatures: Feature[];

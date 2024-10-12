@@ -10,3 +10,9 @@
     padding: 16px 0;
   }
 }
+
+@media (min-width: 992px) {
+  .property-list-container {
+    flex: 0 0 40%; /* 40% width on desktop */
+  }
+}
