@@ -1,0 +1,12 @@
+.property-list-container {
+  flex: 0 0 60%; /* 40% height on mobile */
+  overflow-y: auto;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  .property-list {
+    padding: 16px 0;
+  }
+}
