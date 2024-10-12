@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Map, { Source, Layer, MapRef } from "react-map-gl";
 import { GeoJSONFeatureCollection } from "@/app/shared-components/react-mapbox/types";
 import { MAPBOX_API_SECRET_KEY } from "@/app/apiUtils";
@@ -6,7 +7,7 @@ import {
   clusterCountLayer,
   clusterLayer, unclusteredPointLayer
 } from "@/app/shared-components/react-mapbox/mapbox-styles";
-import { useState } from "react";
+import "./map-component.scss"
 
 interface MapComponentProps {
   viewState: any;

@@ -1,0 +1,11 @@
+.map-wrapper {
+  flex: 0 0 40%; /* 60% height on mobile */
+  position: relative;
+  height: 100%;
+}
+
+@media (min-width: 992px) {
+  .map-wrapper {
+    flex: 0 0 60%; /* 60% width on desktop */
+  }
+}

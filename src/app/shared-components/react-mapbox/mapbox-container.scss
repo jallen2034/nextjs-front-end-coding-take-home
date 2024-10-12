@@ -6,34 +6,7 @@
   height: 100vh;
   overflow: hidden;
 
-  .map-wrapper {
-    flex: 0 0 40%; /* 60% height on mobile */
-    position: relative;
-    height: 100%;
-  }
-
-  .property-list-container {
-    flex: 0 0 60%; /* 40% height on mobile */
-    overflow-y: auto;
-    padding: 16px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-    .property-list {
-      padding: 16px 0;
-    }
-  }
-
   @media (min-width: 992px) {
     flex-direction: row; /* Switch to row layout for desktop screens */
-
-    .map-wrapper {
-      flex: 0 0 60%; /* 60% width on desktop */
-    }
-
-    .property-list-container {
-      flex: 0 0 40%; /* 40% width on desktop */
-    }
   }
 }
