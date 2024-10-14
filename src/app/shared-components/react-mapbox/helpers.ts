@@ -3,12 +3,13 @@ import { Property, ResaleDataFromAPI } from "@/app/map/types";
 import {
   Feature,
   GeoJSONFeatureCollection,
-  NewWindowPointers
+  NewWindowPointers,
 } from "@/app/shared-components/react-mapbox/types";
 import { RefObject } from "react";
 import { MapRef } from "react-map-gl";
 import { MapMouseEvent } from "mapbox-gl"; // Import the bbox utility to calculate bounding boxes.
 import bbox from "@turf/bbox";
+import { FilterData } from "@/app/shared-components/filter-data-modal/types";
 
 const lowerMainlandBounds: [number, number, number, number] = [
   -123.6,
@@ -141,10 +142,62 @@ const setupMapListeners = (
 };
 
 // Helper function with the logic to apply our filters the user sets from the modal
-const applyFiltersFromModal = (): string => {
-  // todo: implement logic in here to update the memoizedGeoJsonData.
-  return "Hello world";
-}
+const applyFiltersFromModal = (
+  geoJsonDataCopy: GeoJSONFeatureCollection | null,
+  filters: FilterData,
+): Feature[] => {
+  try {
+    // Destructure the filters for better readability.
+    const {
+      squareFeet: { min: minSquareFeet, max: maxSquareFeet },
+      bedrooms: { min: minBedrooms, max: maxBedrooms },
+      bathrooms: { min: minBathrooms, max: maxBathrooms },
+      price: { min: minPrice, max: maxPrice },
+    }: FilterData = filters;
+
+    if (!geoJsonDataCopy) {
+      throw new Error("Invalid list of properties to try filter through");
+    }
+
+    // Destructure the features from geoJsonDataCopy to iterate through.
+    const { features }: GeoJSONFeatureCollection = geoJsonDataCopy;
+
+    // First filter the results by squareFeet.
+    let filteredFeatures: Feature[] = features.filter((feature: Feature): boolean => {
+      const { area_sqft }: Property = feature.properties;
+      const areaSqFtNum: number = parseFloat(area_sqft);
+      return areaSqFtNum >= parseFloat(minSquareFeet) && areaSqFtNum <= parseFloat(maxSquareFeet);
+    });
+    
+    // Then, filter the results by bedrooms.
+    filteredFeatures = filteredFeatures.filter((feature: Feature): boolean => {
+      const { bedrooms }: Property = feature.properties;
+      const bedroomsNum: number = parseInt(bedrooms);
+      return bedroomsNum >= minBedrooms && bedroomsNum <= maxBedrooms;
+    });
+    
+    // Then, filter the results by bathrooms.
+    filteredFeatures = filteredFeatures.filter((feature: Feature): boolean => {
+      const { bathrooms }: Property = feature.properties;
+      const bathroomsNum: number = parseInt(bathrooms);
+      return bathroomsNum >= minBathrooms && bathroomsNum <= maxBathrooms;
+    });
+    
+    // Finally, filter the results by price.
+    filteredFeatures = filteredFeatures.filter((feature: Feature): boolean => {
+      const { price }: Property = feature.properties;
+      const priceNum: number = parseFloat(price);
+      return priceNum >= parseFloat(minPrice) && priceNum <= parseFloat(maxPrice);
+    });
+    
+    /* Construct a new GeoJSONFeatureCollection by copying properties from geoJsonDataCopy
+     * and replacing the 'features' property with the filteredFeatures array. */
+    return filteredFeatures;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
 
 export {
   lowerMainlandBounds,
@@ -152,5 +205,5 @@ export {
   zoomToSelectedProperty,
   setupMapListeners,
   calculateWindowLocationWhenMarkerClicked,
-  applyFiltersFromModal
+  applyFiltersFromModal,
 };

@@ -33,8 +33,20 @@ import useWindowSize from "@/app/shared-components/react-mapbox/custom-hooks/use
 import MapComponent from "@/app/shared-components/map-component/map-component";
 import PropertyList from "@/app/shared-components/property-list/property-list";
 import { FilterDataModal } from "@/app/shared-components/filter-data-modal/filter-data-modal";
-import { FilterData } from "@/app/shared-components/filter-data-modal/types";
-import { MAX_SQUARE_FEET } from "@/app/shared-components/filter-data-modal/contants";
+import {
+  FilterData,
+  StringFilterFieldData,
+} from "@/app/shared-components/filter-data-modal/types";
+import {
+  DEFAULT_MIN_PRICE,
+  DEFAULT_MAX_SQUARE_FEET,
+  DEFAULT_MAX_PRICE,
+  DEFAULT_MIN_SQUARE_FEET,
+  DEFAULT_MIN_BEDROOMS,
+  DEFAULT_MAX_BEDROOMS,
+  DEFAULT_MIN_BATHROOMS,
+  DEFAULT_MAX_BATHROOMS,
+} from "@/app/shared-components/filter-data-modal/contants";
 import { SelectChangeEvent } from "@mui/material";
 import "./mapbox-container.scss";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -60,13 +72,19 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
 
   // State to keep track fo the current filters set in the modal.
   const [filters, setFilters] = useState<FilterData>({
-    squareFeet: { min: "0", max: MAX_SQUARE_FEET.toString() },
-    bedrooms: { min: 0, max: 0 },
-    bathrooms: { min: 1, max: 1 },
-    price: { min: "50000", max: "5000000" },
+    squareFeet: {
+      min: DEFAULT_MIN_SQUARE_FEET.toString(),
+      max: DEFAULT_MAX_SQUARE_FEET.toString(),
+    },
+    bedrooms: { min: DEFAULT_MIN_BEDROOMS, max: DEFAULT_MAX_BEDROOMS },
+    bathrooms: { min: DEFAULT_MIN_BATHROOMS, max: DEFAULT_MAX_BATHROOMS },
+    price: {
+      min: DEFAULT_MIN_PRICE.toString(),
+      max: DEFAULT_MAX_PRICE.toString(),
+    },
   });
 
-  // State management for the map's view.
+  // State management for the map's current view.
   const [viewState, setViewState] = useState<MapViewState>({
     longitude: -123.1207,
     latitude: 49.2827,
@@ -228,23 +246,53 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   };
 
   const handleApplyFilters: any = (): void => {
-    const filteredMemoizedGeoJsonData: any = applyFiltersFromModal();
-    console.log(filteredMemoizedGeoJsonData);
+    const filteredMemoizedGeoJsonData: Feature[] = applyFiltersFromModal(
+      geoJsonDataCopy,
+      filters,
+    );
+    console.log({ filteredMemoizedGeoJsonData });
+    console.log({ originalGeoJsonData });
+    console.log({ visibleFeatures });
+
+    // Clear visible features if filtered results are empty
+    if (filteredMemoizedGeoJsonData.length === 0) {
+      setVisibleFeatures([]); // Clear out visible features cache.
+    } else { // Only ever change the GeoJsonDataCopy when the filteredMemoizedGeoJsonData isn't empty.
+      setGeoJsonDataCopy((prevState: GeoJSONFeatureCollection | null) => ({
+        ...prevState,
+        type: prevState?.type || "FeatureCollection",
+        features: filteredMemoizedGeoJsonData,
+      }));
+    }
+    setOpenFilterModal(false);
   };
 
-  // Callback functiont o handle updating the enable/disable filters toggle.
+  // Callback function to handle updating the enable/disable filters toggle.
   const handleChangeEnableFilters: any = (
     event: ChangeEvent<HTMLInputElement>,
   ): void => {
-    setEnableFilters(event.target.checked);
+    const newValue: boolean = event.target.checked;
+
+    // If the user is disabling the toggle, reset the filters on the dataCopy to the original.
+    if (!newValue) {
+      setGeoJsonDataCopy(originalGeoJsonData);
+    }
+
+    setEnableFilters(newValue);
   };
 
-  // Methods that handle updating the state of the user's selected filters
+  // Methods that handle updating the state of the user's selected filters.
   const handleInputChange: any =
-    (key: keyof FilterData): any =>
+    (
+      categoryKey: keyof FilterData,
+      categoryTypeKey: keyof StringFilterFieldData,
+    ): any =>
     (event: React.ChangeEvent<HTMLInputElement>): void => {
       const value: string = event.target.value;
-      setFilters({ ...filters, [key]: { ...filters[key], min: value } });
+      setFilters({
+        ...filters,
+        [categoryKey]: { ...filters[categoryKey], [categoryTypeKey]: value },
+      });
     };
 
   const handleSelectChange: any =
@@ -257,10 +305,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       });
     };
 
-  // For debugging.
-  console.log({ originalGeoJsonData });
-  console.log({ currentGeoJsonData });
-  console.log({ enableFilters });
+  console.log({ geoJsonDataCopy });
 
   return (
     <div className="mapbox-container">
@@ -285,6 +330,9 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
               handleChangePropertyToLocateOnMap,
               selectedPropertyToLocateOnMap,
               handleOpenCloseFilterModal,
+              filters,
+              enableFilters,
+              geoJsonDataCopy,
             }}
           />
           <MapComponent
@@ -313,6 +361,9 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
               handleChangePropertyToLocateOnMap,
               selectedPropertyToLocateOnMap,
               handleOpenCloseFilterModal,
+              filters,
+              enableFilters,
+              geoJsonDataCopy
             }}
           />
         </>

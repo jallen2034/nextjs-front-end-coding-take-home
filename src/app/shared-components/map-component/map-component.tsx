@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { RefObject, useState } from "react";
 import Map, { Source, Layer, MapRef } from "react-map-gl";
 import { GeoJSONFeatureCollection } from "@/app/shared-components/react-mapbox/types";
 import { MAPBOX_API_SECRET_KEY } from "@/app/apiUtils";
@@ -11,7 +11,7 @@ import "./map-component.scss"
 
 interface MapComponentProps {
   viewState: any;
-  mapRef: React.RefObject<MapRef>;
+  mapRef: RefObject<MapRef>;
   currentGeoJsonData: GeoJSONFeatureCollection;
   onMove: any
 }

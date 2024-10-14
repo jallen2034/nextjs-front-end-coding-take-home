@@ -25,14 +25,6 @@ const ModalForm = ({
 }: ModalFormProps) => {
   return (
     <div className="modal-form-container">
-      <Typography
-        id="modal-modal-title"
-        className="header-text-modal"
-        variant="h6"
-        component="h2"
-      >
-        Property Filters:
-      </Typography>
       {/* Square Feet Filter */}
       <Typography variant="body1" className="modal-font">
         Square Feet
@@ -41,7 +33,7 @@ const ModalForm = ({
         <TextField
           label="Min Square Feet"
           value={filters.squareFeet.min}
-          onChange={handleInputChange("squareFeet")}
+          onChange={handleInputChange("squareFeet", "min")}
           margin="normal"
           fullWidth
           error={!!filterErrors?.squareFeet?.min} // Show error if exists.
@@ -50,7 +42,7 @@ const ModalForm = ({
         <TextField
           label="Max Square Feet"
           value={filters.squareFeet.max}
-          onChange={handleInputChange("squareFeet")}
+          onChange={handleInputChange("squareFeet", "max")}
           margin="normal"
           fullWidth
           error={!!filterErrors?.squareFeet?.max} // Show error if exists.
@@ -177,7 +169,7 @@ const ModalForm = ({
         <TextField
           label="Min Price"
           value={filters.price.min}
-          onChange={handleInputChange("price")}
+          onChange={handleInputChange("price", "min")}
           margin="normal"
           fullWidth
           error={!!filterErrors?.price?.min}
@@ -186,7 +178,7 @@ const ModalForm = ({
         <TextField
           label="Max Price"
           value={filters.price.max}
-          onChange={handleInputChange("price")}
+          onChange={handleInputChange("price", "max")}
           margin="normal"
           fullWidth
           error={!!filterErrors?.price?.max}

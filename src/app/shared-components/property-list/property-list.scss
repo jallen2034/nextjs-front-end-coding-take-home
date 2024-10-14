@@ -45,6 +45,13 @@
     padding: 16px 0;
     overflow-y: scroll; /* Makes the list scrollable */
   }
+
+  .no-results-error-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
 }
 
 @media (min-width: 992px) {
