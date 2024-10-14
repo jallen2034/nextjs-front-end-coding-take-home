@@ -103,11 +103,7 @@ Ran all test suites.
 - Tests: The total number of individual test cases that were executed.
 - Time: The total amount of time it took to run the automated test suite.
 
-### Building for Production:
-To build the app for production:
-```bash
-npm run build
-```
-
+### Video Demo of application:
+https://github.com/user-attachments/assets/17357580-3cc7-41c4-8092-21e9a93ebba9
 
 
