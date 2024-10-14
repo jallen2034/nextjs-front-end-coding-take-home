@@ -12,14 +12,14 @@ import "./map-component.scss"
 interface MapComponentProps {
   viewState: any;
   mapRef: React.RefObject<MapRef>;
-  memoizedGeoJsonData: GeoJSONFeatureCollection;
+  currentGeoJsonData: GeoJSONFeatureCollection;
   onMove: any
 }
 
 const MapComponent = ({
   viewState,
   mapRef,
-  memoizedGeoJsonData,
+  currentGeoJsonData,
   onMove
 }: MapComponentProps) => {
   const [isMapLoaded, setIsMapLoadedInternal] = useState<boolean>(false);
@@ -41,9 +41,9 @@ const MapComponent = ({
           <Source
             id="records"
             type="geojson"
-            data={memoizedGeoJsonData}
+            data={currentGeoJsonData}
             cluster={true}
-            clusterMaxZoom={10}
+            clusterMaxZoom={13}
             clusterRadius={50}
           >
             <Layer {...clusterLayer} />

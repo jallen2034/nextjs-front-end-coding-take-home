@@ -15,19 +15,24 @@ interface FilterDataErrors {
 }
 
 interface ValidateModalInputReturnVals {
-  errors: FilterDataErrors,
-  hasErrors: boolean
+  errors: FilterDataErrors;
+  hasErrors: boolean;
 }
 
 interface FilterDataModalProps {
   handleOpenCloseFilterModal: ChangeFilterModalCB;
   openFilterModal: boolean;
   handleApplyFilters: () => any;
+  handleInputChange: any;
+  handleSelectChange: any;
+  filters: FilterData;
+  enableFilters: boolean;
+  handleChangeEnableFilters: any
 }
 
 export type {
   FilterData,
   FilterDataModalProps,
   FilterDataErrors,
-  ValidateModalInputReturnVals
-}
+  ValidateModalInputReturnVals,
+};

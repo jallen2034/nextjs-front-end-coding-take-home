@@ -7,8 +7,8 @@ import {
 } from "@/app/shared-components/react-mapbox/types";
 import { RefObject } from "react";
 import { MapRef } from "react-map-gl";
-import bbox from "@turf/bbox";
 import { MapMouseEvent } from "mapbox-gl"; // Import the bbox utility to calculate bounding boxes.
+import bbox from "@turf/bbox";
 
 const lowerMainlandBounds: [number, number, number, number] = [
   -123.6,

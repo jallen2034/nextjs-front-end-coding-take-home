@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import {
+  ChangeEvent,
+  MutableRefObject,
   RefObject,
   useCallback,
   useEffect,
@@ -11,7 +13,8 @@ import {
 } from "react";
 import { MapRef, ViewStateChangeEvent } from "react-map-gl";
 import {
-  applyFiltersFromModal, calculateWindowLocationWhenMarkerClicked,
+  applyFiltersFromModal,
+  calculateWindowLocationWhenMarkerClicked,
   generateGeoJsonDataFromMemoizedRecords,
   setupMapListeners,
   zoomToSelectedProperty,
@@ -26,12 +29,15 @@ import {
   PropertyToLocateOnMapCB,
   SlidingWindowPointers,
 } from "@/app/shared-components/react-mapbox/types";
-import "./mapbox-container.scss";
-import "mapbox-gl/dist/mapbox-gl.css";
 import useWindowSize from "@/app/shared-components/react-mapbox/custom-hooks/useWindowSize";
 import MapComponent from "@/app/shared-components/map-component/map-component";
 import PropertyList from "@/app/shared-components/property-list/property-list";
 import { FilterDataModal } from "@/app/shared-components/filter-data-modal/filter-data-modal";
+import { FilterData } from "@/app/shared-components/filter-data-modal/types";
+import { MAX_SQUARE_FEET } from "@/app/shared-components/filter-data-modal/contants";
+import { SelectChangeEvent } from "@mui/material";
+import "./mapbox-container.scss";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 // Encapsulates the Mapbox map and is reusable across the Next.js app.
 const MapboxContainer = ({ records }: MapBoxContainerProps) => {
@@ -42,10 +48,23 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   const mapRef: RefObject<MapRef> = useRef<MapRef>(null);
 
   // Array of all the potential refs to attach to the elements generated below via visibleFeatures.
-  const propertyRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const propertyRefs: MutableRefObject<(HTMLDivElement | null)[]> = useRef<
+    (HTMLDivElement | null)[]
+  >([]);
 
   // State to manage opening and closing the modal to filer the property data.
   const [openFilterModal, setOpenFilterModal] = useState<boolean>(false);
+
+  // State to keep track of if the user wants to have filters enabled or not.
+  const [enableFilters, setEnableFilters] = useState<boolean>(false);
+
+  // State to keep track fo the current filters set in the modal.
+  const [filters, setFilters] = useState<FilterData>({
+    squareFeet: { min: "0", max: MAX_SQUARE_FEET.toString() },
+    bedrooms: { min: 0, max: 0 },
+    bathrooms: { min: 1, max: 1 },
+    price: { min: "50000", max: "5000000" },
+  });
 
   // State management for the map's view.
   const [viewState, setViewState] = useState<MapViewState>({
@@ -68,8 +87,12 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   // Array to store the currently visible features. Calculated within bounds of the left + right pointer of the window.
   const [visibleFeatures, setVisibleFeatures] = useState<Feature[]>([]);
 
-  // Memoized GeoJSON data derived from the records.
-  const memoizedGeoJsonData: GeoJSONFeatureCollection =
+  // Create a copy of originalGeoJsonData on mount that will be used to modify when the user filters properties
+  const [geoJsonDataCopy, setGeoJsonDataCopy] =
+    useState<GeoJSONFeatureCollection | null>(null);
+
+  // Memoized GeoJSON data derived from the records - this is read only and should never be modified.
+  const originalGeoJsonData: GeoJSONFeatureCollection =
     useMemo((): GeoJSONFeatureCollection => {
       return generateGeoJsonDataFromMemoizedRecords(
         records,
@@ -77,13 +100,20 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       );
     }, [records, selectedPropertyToLocateOnMap]);
 
-  // Destructure properties from the memoized GeoJSON data.
-  const { features }: GeoJSONFeatureCollection = memoizedGeoJsonData;
+  // Choose to use geoJsonDataCopy if it exists, otherwise fallback to originalGeoJsonData.
+  const currentGeoJsonData: GeoJSONFeatureCollection =
+    geoJsonDataCopy ?? originalGeoJsonData;
+  const { features }: GeoJSONFeatureCollection = currentGeoJsonData;
   const { length }: Feature[] = features;
 
   // Custom hook to calculate the window size.
   const { width } = useWindowSize();
   const isDesktop: boolean = width !== undefined && width >= 992; // Assuming 992px is your breakpoint
+
+  // When the originalGeoJsonData is fetched on first page load from the API, copy it into geoJsonDataCopy.
+  useEffect((): void => {
+    setGeoJsonDataCopy(originalGeoJsonData);
+  }, [originalGeoJsonData]);
 
   // Effect to scroll to the selected property into view when it is selected from a map marker.
   useEffect(() => {
@@ -144,7 +174,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   }, [
     features,
     mapRef,
-    memoizedGeoJsonData,
+    currentGeoJsonData,
     selectedPropertyToLocateOnMap,
     setSelectedPropertyToLocateOnMap,
   ]);
@@ -196,15 +226,56 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   ): void => {
     setSelectedPropertyToLocateOnMap(id);
   };
-  
+
   const handleApplyFilters: any = (): void => {
     const filteredMemoizedGeoJsonData: any = applyFiltersFromModal();
-    console.log(filteredMemoizedGeoJsonData)
-  }
-  
+    console.log(filteredMemoizedGeoJsonData);
+  };
+
+  // Callback functiont o handle updating the enable/disable filters toggle.
+  const handleChangeEnableFilters: any = (
+    event: ChangeEvent<HTMLInputElement>,
+  ): void => {
+    setEnableFilters(event.target.checked);
+  };
+
+  // Methods that handle updating the state of the user's selected filters
+  const handleInputChange: any =
+    (key: keyof FilterData): any =>
+    (event: React.ChangeEvent<HTMLInputElement>): void => {
+      const value: string = event.target.value;
+      setFilters({ ...filters, [key]: { ...filters[key], min: value } });
+    };
+
+  const handleSelectChange: any =
+    (key: keyof FilterData, isMin: boolean): any =>
+    (event: SelectChangeEvent<number>): void => {
+      const value = event.target.value as number;
+      setFilters({
+        ...filters,
+        [key]: { ...filters[key], [isMin ? "min" : "max"]: value },
+      });
+    };
+
+  // For debugging.
+  console.log({ originalGeoJsonData });
+  console.log({ currentGeoJsonData });
+  console.log({ enableFilters });
+
   return (
     <div className="mapbox-container">
-      <FilterDataModal {...{ handleOpenCloseFilterModal, openFilterModal, handleApplyFilters }} />
+      <FilterDataModal
+        {...{
+          handleOpenCloseFilterModal,
+          openFilterModal,
+          handleApplyFilters,
+          handleInputChange,
+          handleSelectChange,
+          filters,
+          enableFilters,
+          handleChangeEnableFilters,
+        }}
+      />
       {isDesktop ? (
         <>
           <PropertyList
@@ -220,7 +291,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
             {...{
               viewState,
               mapRef,
-              memoizedGeoJsonData,
+              currentGeoJsonData,
               onMove,
             }}
           />
@@ -231,7 +302,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
             {...{
               viewState,
               mapRef,
-              memoizedGeoJsonData,
+              currentGeoJsonData,
               onMove,
             }}
           />
