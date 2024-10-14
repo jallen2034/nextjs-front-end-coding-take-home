@@ -1,0 +1,21 @@
+.active-filters-container {
+  display: flex;
+  flex-direction: row;
+  margin-top: 0.5rem;
+
+  .active-filters {
+    display: flex;
+    flex-direction: row; /* Inline bubbles */
+    flex-wrap: wrap;
+    margin-right: auto; /* Center align with button */
+  }
+
+  .filter-bubble {
+    background-color: #733bc4;
+    border-radius: 0.8rem; /* Smaller border radius for a tighter appearance */
+    padding: 0.15rem 0.4rem; /* Reduced padding for even smaller bubbles */
+    margin-right: 4px; /* Smaller margin between bubbles */
+    margin-bottom: 4px; /* Space between rows of bubbles */
+    font-size: 0.65rem; /* Smaller font size for more compact look */
+  }
+}

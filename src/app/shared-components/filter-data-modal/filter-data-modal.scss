@@ -11,41 +11,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   padding: 16px;
 
-  .header-text-modal {
+  .header-text-modal-toggle {
     @include bold-header-text;
-    margin-bottom: 1rem;
-  }
-
-  .modal-font {
-    color: #333;
-  }
-
-  h6 {
-    margin: 0;
-  }
-
-  .filter-inputs {
-    display: flex;
-    flex-direction: row;
-    gap: 8px;
-
-    & > * {
-      width: 100%; // Make each input take full width
-    }
-  }
-
-  .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 16px;
-  }
-
-  .cancel-modal-button {
-    @include generic-red-button;
-    margin-right: 1rem;
-  }
-
-  .apply-changes-modal-button {
-    @include generic-blue-button;
   }
 }

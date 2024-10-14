@@ -1,29 +1,32 @@
-import { useState } from "react";
+import { RefObject, useState } from "react";
 import Map, { Source, Layer, MapRef } from "react-map-gl";
 import { GeoJSONFeatureCollection } from "@/app/shared-components/react-mapbox/types";
 import { MAPBOX_API_SECRET_KEY } from "@/app/apiUtils";
 import { lowerMainlandBounds } from "@/app/shared-components/react-mapbox/helpers";
 import {
   clusterCountLayer,
-  clusterLayer, unclusteredPointLayer
+  clusterLayer,
+  unclusteredPointLayer,
 } from "@/app/shared-components/react-mapbox/mapbox-styles";
-import "./map-component.scss"
+import "./map-component.scss";
 
 interface MapComponentProps {
   viewState: any;
-  mapRef: React.RefObject<MapRef>;
-  memoizedGeoJsonData: GeoJSONFeatureCollection;
-  onMove: any
+  mapRef: RefObject<MapRef>;
+  currentGeoJsonData: GeoJSONFeatureCollection;
+  onMove: any;
 }
 
 const MapComponent = ({
   viewState,
   mapRef,
-  memoizedGeoJsonData,
-  onMove
+  currentGeoJsonData,
+  onMove,
 }: MapComponentProps) => {
   const [isMapLoaded, setIsMapLoadedInternal] = useState<boolean>(false);
-  
+  console.log("Your current!");
+  console.log({ currentGeoJsonData });
+
   return (
     <div className="map-wrapper">
       <Map
@@ -41,9 +44,9 @@ const MapComponent = ({
           <Source
             id="records"
             type="geojson"
-            data={memoizedGeoJsonData}
+            data={currentGeoJsonData}
             cluster={true}
-            clusterMaxZoom={10}
+            clusterMaxZoom={13}
             clusterRadius={50}
           >
             <Layer {...clusterLayer} />

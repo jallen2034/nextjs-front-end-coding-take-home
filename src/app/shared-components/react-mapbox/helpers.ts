@@ -3,12 +3,13 @@ import { Property, ResaleDataFromAPI } from "@/app/map/types";
 import {
   Feature,
   GeoJSONFeatureCollection,
-  NewWindowPointers
+  NewWindowPointers,
 } from "@/app/shared-components/react-mapbox/types";
 import { RefObject } from "react";
 import { MapRef } from "react-map-gl";
-import bbox from "@turf/bbox";
 import { MapMouseEvent } from "mapbox-gl"; // Import the bbox utility to calculate bounding boxes.
+import bbox from "@turf/bbox";
+import { FilterData } from "@/app/shared-components/filter-data-modal/types";
 
 const lowerMainlandBounds: [number, number, number, number] = [
   -123.6,
@@ -48,6 +49,34 @@ const generateGeoJsonDataFromMemoizedRecords = (
   };
 };
 
+const recalculateSelectedFeatureInGeoJsonDataCopy = (
+  geoJsonDataCopy: GeoJSONFeatureCollection | null,
+  selectedPropertyId: string | null,
+): GeoJSONFeatureCollection | null => {
+  if (!geoJsonDataCopy) return null; // Guard clause for empty geoJsonDataCopy
+
+  // Iterate through features and update the 'isSelected' field
+  const updatedFeatures: Feature[] = geoJsonDataCopy.features.map(
+    (feature: Feature) => {
+      const { id }: Property = feature.properties;
+
+      return {
+        ...feature,
+        properties: {
+          ...feature.properties,
+          isSelected: selectedPropertyId === id, // Set to true only if IDs match/
+        },
+      };
+    },
+  );
+  
+  // Return updated features array.
+  return {
+    ...geoJsonDataCopy,
+    features: updatedFeatures,
+  };
+};
+
 // Helper function to take the ref to the map and zoom the map to the selected property.
 const zoomToSelectedProperty = (
   selectedFeature: Feature,
@@ -75,7 +104,7 @@ const zoomToSelectedProperty = (
  * if the clicked property is at index 24, the window will move to display properties from indices 20 to 29.
  * This approach is used instead of rendering all properties in the list (over 4000 in total), which would lead to performance issues
  * in the UI. By maintaining a sliding window of visible features, we optimize rendering and ensure a smoother user experience. */
-const calculateWindowLocationWhenMarkerClicked = (
+const calculateWindowLocation = (
   id: string | null,
   features: Feature[],
   maxVisibleFeatures: number,
@@ -98,6 +127,19 @@ const calculateWindowLocationWhenMarkerClicked = (
     features.length - 1,
   );
 
+  return { newLeftIdx, newRightIdx };
+};
+
+const initializeWindowLocation = (
+  filteredFeatures: Feature[],
+  maxVisibleFeatures: number,
+): NewWindowPointers => {
+  // Set left index to 0
+  const newLeftIdx = 0;
+  
+  // Set right index based on the filteredFeatures length, ensuring it doesn't exceed the maxVisibleFeatures
+  const newRightIdx: number = Math.min(filteredFeatures.length - 1, maxVisibleFeatures - 1);
+  
   return { newLeftIdx, newRightIdx };
 };
 
@@ -130,7 +172,7 @@ const setupMapListeners = (
   map.on("mouseleave", "unclustered-point", handleMouseLeaveListener);
 
   // Return cleanup function
-  return () => {
+  return (): void => {
     // @ts-ignore
     map.off("click", "unclustered-point");
     // @ts-ignore
@@ -141,16 +183,77 @@ const setupMapListeners = (
 };
 
 // Helper function with the logic to apply our filters the user sets from the modal
-const applyFiltersFromModal = (): string => {
-  // todo: implement logic in here to update the memoizedGeoJsonData.
-  return "Hello world";
-}
+const applyFiltersFromModal = (
+  geoJsonDataCopy: GeoJSONFeatureCollection | null,
+  filters: FilterData,
+): Feature[] => {
+  try {
+    // Destructure the filters for better readability.
+    const {
+      squareFeet: { min: minSquareFeet, max: maxSquareFeet },
+      bedrooms: { min: minBedrooms, max: maxBedrooms },
+      bathrooms: { min: minBathrooms, max: maxBathrooms },
+      price: { min: minPrice, max: maxPrice },
+    }: FilterData = filters;
+
+    if (!geoJsonDataCopy) {
+      throw new Error("Invalid list of properties to try filter through");
+    }
+
+    // Destructure the features from geoJsonDataCopy to iterate through.
+    const { features }: GeoJSONFeatureCollection = geoJsonDataCopy;
+
+    // First filter the results by squareFeet.
+    let filteredFeatures: Feature[] = features.filter(
+      (feature: Feature): boolean => {
+        const { area_sqft }: Property = feature.properties;
+        const areaSqFtNum: number = parseFloat(area_sqft);
+        return (
+          areaSqFtNum >= parseFloat(minSquareFeet) &&
+          areaSqFtNum <= parseFloat(maxSquareFeet)
+        );
+      },
+    );
+
+    // Then, filter the results by bedrooms.
+    filteredFeatures = filteredFeatures.filter((feature: Feature): boolean => {
+      const { bedrooms }: Property = feature.properties;
+      const bedroomsNum: number = parseInt(bedrooms);
+      return bedroomsNum >= minBedrooms && bedroomsNum <= maxBedrooms;
+    });
+
+    // Then, filter the results by bathrooms.
+    filteredFeatures = filteredFeatures.filter((feature: Feature): boolean => {
+      const { bathrooms }: Property = feature.properties;
+      const bathroomsNum: number = parseInt(bathrooms);
+      return bathroomsNum >= minBathrooms && bathroomsNum <= maxBathrooms;
+    });
+
+    // Finally, filter the results by price.
+    filteredFeatures = filteredFeatures.filter((feature: Feature): boolean => {
+      const { price }: Property = feature.properties;
+      const priceNum: number = parseFloat(price);
+      return (
+        priceNum >= parseFloat(minPrice) && priceNum <= parseFloat(maxPrice)
+      );
+    });
+
+    /* Construct a new GeoJSONFeatureCollection by copying properties from geoJsonDataCopy
+     * and replacing the 'features' property with the filteredFeatures array. */
+    return filteredFeatures;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
 
 export {
   lowerMainlandBounds,
   generateGeoJsonDataFromMemoizedRecords,
   zoomToSelectedProperty,
   setupMapListeners,
-  calculateWindowLocationWhenMarkerClicked,
-  applyFiltersFromModal
+  calculateWindowLocation,
+  applyFiltersFromModal,
+  recalculateSelectedFeatureInGeoJsonDataCopy,
+  initializeWindowLocation
 };
