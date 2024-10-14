@@ -63,6 +63,46 @@ Once your API key is configured, you can start the development server:
 npm run dev
 ```
 
+### Running a Production Build:
+For optimal application performance, I recommended to run the app in production mode. Follow these steps to build and start the app for production:
+
+1. **Build the application**:    Use the following command to create a production-optimized build of the application:
+```bash
+npm run build
+````
+This should  generate a `build` directory with optimized assets, including minified JavaScript, CSS, and other files.
+2. Start the production build: After building the app, you can start the production server with:
+
+```bash
+npm start
+```
+
+This will serve the optimized build on your local server, ensuring that the app performs at its best.
+- Performance: Running the app in production mode significantly improves load times, performance, and overall user experience.
+- Environment: Before doing this, be sure to double check that your environment variables (if any) are correctly configured for the production environment.
+
+### Running the Automated Unit Test Suite with Jest:
+To run the unit tests using Jest, use the following command in your terminal:
+```bash
+npm test
+```
+This will execute all the unit tests in the project. Upon successful execution, you should see an output similar to the following:
+
+```bash
+PASS  src/app/shared-components/property-list/helpers.test.ts (8.478 s)
+PASS  src/app/shared-components/filter-data-modal/helpers.test.ts (8.601 s)
+PASS  src/app/shared-components/react-mapbox/helper.test.ts (8.777 s)
+
+Test Suites: 3 passed, 3 total
+Tests:       18 passed, 18 total
+Snapshots:   0 total
+Time:        9.477 s
+Ran all test suites.
+```
+- Test Suites: The number of test files that were executed and passed.
+- Tests: The total number of individual test cases that were executed.
+- Time: The total amount of time it took to run the automated test suite.
+
 ### Building for Production:
 To build the app for production:
 ```bash

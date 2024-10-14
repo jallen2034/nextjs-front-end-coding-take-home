@@ -1,5 +1,6 @@
 import { ViewStateChangeEvent } from "react-map-gl";
 import { Property, ResaleDataFromAPI } from "@/app/map/types";
+import { RefObject } from "react";
 
 type OnMoveCB = (event: ViewStateChangeEvent) => void;
 
@@ -22,6 +23,11 @@ interface Feature {
   type: string;
   geometry: Coordinates;
   properties: Property;
+}
+
+interface SelectedPropertyResult {
+  selectedFeature: Feature | undefined;
+  propertyRef: RefObject<any>;
 }
 
 // Define the interface for the entire GeoJSON FeatureCollection
@@ -54,5 +60,6 @@ export type {
   SlidingWindowPointers,
   NewWindowPointers,
   ChangeFilterModalCB,
-  PropertyToLocateOnMapCB
+  PropertyToLocateOnMapCB,
+  SelectedPropertyResult
 };

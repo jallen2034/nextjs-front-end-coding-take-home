@@ -1,11 +1,9 @@
 // Define bounds for the Lower Mainland (northwest and southeast corners).
 import { Property, ResaleDataFromAPI } from "@/app/map/types";
 import {
-  Feature,
-  GeoJSONFeatureCollection,
-  NewWindowPointers,
+  Feature, GeoJSONFeatureCollection, NewWindowPointers, SelectedPropertyResult,
 } from "@/app/shared-components/react-mapbox/types";
-import { RefObject } from "react";
+import { MutableRefObject, RefObject } from "react";
 import { MapRef } from "react-map-gl";
 import { MapMouseEvent } from "mapbox-gl"; // Import the bbox utility to calculate bounding boxes.
 import bbox from "@turf/bbox";
@@ -182,6 +180,29 @@ const setupMapListeners = (
   };
 };
 
+const getSelectedPropertyByRef = (
+  selectedPropertyId: string,
+  visibleFeatures: Feature[],
+  propertyRefs: MutableRefObject<(HTMLDivElement | null)[]>,
+  features: Feature[]
+): SelectedPropertyResult | null => {
+  const index: number = visibleFeatures.findIndex(
+    (feature: Feature): boolean => feature.properties.id === selectedPropertyId
+  );
+  
+  // Retrieve the property reference that matches the ID of the selected property.
+  const propertyRef: any = propertyRefs.current[index];
+  
+  // Guard clause to check if the index is -1 (not found) or if the reference itself is invalid.
+  if (index === -1 || !propertyRef?.current) return null;
+  
+  const selectedFeature: Feature | undefined = features.find(
+    (feature: Feature): boolean => feature.properties.id === selectedPropertyId
+  );
+  
+  return { selectedFeature, propertyRef };
+};
+
 // Helper function with the logic to apply our filters the user sets from the modal
 const applyFiltersFromModal = (
   geoJsonDataCopy: GeoJSONFeatureCollection | null,
@@ -255,5 +276,6 @@ export {
   calculateWindowLocation,
   applyFiltersFromModal,
   recalculateSelectedFeatureInGeoJsonDataCopy,
-  initializeWindowLocation
+  initializeWindowLocation,
+  getSelectedPropertyByRef
 };
