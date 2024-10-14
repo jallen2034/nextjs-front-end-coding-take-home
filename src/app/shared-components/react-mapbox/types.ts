@@ -41,6 +41,10 @@ interface NewWindowPointers {
   newRightIdx: number
 }
 
+type ChangeFilterModalCB = (action: boolean) => void
+
+type PropertyToLocateOnMapCB = (id: string) => void
+
 export type {
   MapBoxContainerProps,
   OnMoveCB,
@@ -48,5 +52,7 @@ export type {
   GeoJSONFeatureCollection,
   Feature,
   SlidingWindowPointers,
-  NewWindowPointers
+  NewWindowPointers,
+  ChangeFilterModalCB,
+  PropertyToLocateOnMapCB
 };
