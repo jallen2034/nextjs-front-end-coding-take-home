@@ -131,7 +131,7 @@ const setupMapListeners = (
   map.on("mouseleave", "unclustered-point", handleMouseLeaveListener);
 
   // Return cleanup function
-  return () => {
+  return (): void => {
     // @ts-ignore
     map.off("click", "unclustered-point");
     // @ts-ignore

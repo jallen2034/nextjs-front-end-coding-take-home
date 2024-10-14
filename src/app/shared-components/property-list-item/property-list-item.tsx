@@ -59,7 +59,7 @@ export const PropertyListItem = ({
             variant="contained"
             color="primary"
             className="order-button"
-            onClick={() => handleChangePropertyToLocateOnMap(id)}
+            onClick={(): void => handleChangePropertyToLocateOnMap(id)}
           >
             Locate on Map
           </Button>

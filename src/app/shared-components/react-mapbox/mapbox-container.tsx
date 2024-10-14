@@ -246,22 +246,25 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   };
 
   const handleApplyFilters: any = (): void => {
-    const filteredMemoizedGeoJsonData: Feature[] = applyFiltersFromModal(
-      geoJsonDataCopy,
+    const filteredFeatures: Feature[] = applyFiltersFromModal(
+      originalGeoJsonData,
       filters,
     );
-    console.log({ filteredMemoizedGeoJsonData });
-    console.log({ originalGeoJsonData });
-    console.log({ visibleFeatures });
-
+    
     // Clear visible features if filtered results are empty
-    if (filteredMemoizedGeoJsonData.length === 0) {
+    if (filteredFeatures.length === 0) {
       setVisibleFeatures([]); // Clear out visible features cache.
     } else { // Only ever change the GeoJsonDataCopy when the filteredMemoizedGeoJsonData isn't empty.
+      const { leftIdx, rightIdx } = slidingWindowForVisibleFeatures;
+      const newVisibleFeatures: Feature[] = filteredFeatures.slice(
+        leftIdx,
+        rightIdx + 1,
+      );
+      setVisibleFeatures(newVisibleFeatures);
       setGeoJsonDataCopy((prevState: GeoJSONFeatureCollection | null) => ({
         ...prevState,
         type: prevState?.type || "FeatureCollection",
-        features: filteredMemoizedGeoJsonData,
+        features: filteredFeatures,
       }));
     }
     setOpenFilterModal(false);
@@ -306,6 +309,8 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     };
 
   console.log({ geoJsonDataCopy });
+  console.log("YA LENGTH: ");
+  console.log(propertyRefs)
 
   return (
     <div className="mapbox-container">
