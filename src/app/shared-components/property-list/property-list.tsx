@@ -32,8 +32,6 @@ const PropertyList: FC<PropertyListProps> = ({
   geoJsonDataCopy
 }) => {
   const resultsCount: number = geoJsonDataCopy ? geoJsonDataCopy.features.length : 0;
-  console.log("MEEEE");
-  console.log(visibleFeatures)
   
   return (
     <div className="property-list-container">

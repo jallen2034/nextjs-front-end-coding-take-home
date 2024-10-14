@@ -1,6 +1,6 @@
 // Constants for dropdown options
-const BEDROOM_OPTIONS: number[] = Array.from({ length: 10 }, (_, i) => i);
-const BATHROOM_OPTIONS: number[] = Array.from({ length: 9 }, (_, i) => i + 1); // Bathrooms start from 1
+const BEDROOM_OPTIONS: number[] = [0, 1, 2, 3, 4, 5]; // Bedrooms options
+const BATHROOM_OPTIONS: number[] = [1, 2, 3, 4, 5]; // Bathrooms start from 1
 const DEFAULT_MIN_BEDROOMS: number = 0;
 const DEFAULT_MAX_BEDROOMS: number = 0;
 const DEFAULT_MIN_BATHROOMS: number = 1;

@@ -1,12 +1,13 @@
 @use '../../base' as *;
 
 .property-list-container {
-  flex: 0 0 60%; /* Default height for mobile */
+  flex: 0 0 60%; /* Default width for mobile */
   display: flex;
   flex-direction: column;
   background-color: #f8f9fa;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 100vh; /* Ensure the container takes the full viewport height */
 
   .header-text {
     @include bold-header-text;
@@ -31,11 +32,11 @@
       display: flex; /* Make the button a flex container */
       align-items: center; /* Center the items vertically */
       justify-content: center; /* Center the items horizontally */
-      padding: 0.5rem 1rem; /* Adjust padding as needed */
+      padding: 0.5rem 1rem;
 
       .filter-icon {
-        margin-left: 0.35rem; /* Add some space between the text and icon */
-        font-size: 1.2rem; /* Adjust the size of the icon as needed */
+        margin-left: 0.35rem;
+        font-size: 1.2rem;
       }
     }
   }
@@ -43,7 +44,13 @@
   .property-list {
     flex: 1; /* Take the remaining space */
     padding: 16px 0;
-    overflow-y: scroll; /* Makes the list scrollable */
+    overflow-y: auto;
+
+    /* Fix for mobile: Set a calculated height so the list scrolls */
+    @media (max-width: 992px) {
+      height: calc(100vh - 160px);
+      padding-bottom: 15rem;
+    }
   }
 
   .no-results-error-container {

@@ -14,8 +14,9 @@ import {
 import { MapRef, ViewStateChangeEvent } from "react-map-gl";
 import {
   applyFiltersFromModal,
-  calculateWindowLocationWhenMarkerClicked,
-  generateGeoJsonDataFromMemoizedRecords,
+  calculateWindowLocation,
+  generateGeoJsonDataFromMemoizedRecords, initializeWindowLocation,
+  recalculateSelectedFeatureInGeoJsonDataCopy,
   setupMapListeners,
   zoomToSelectedProperty,
 } from "@/app/shared-components/react-mapbox/helpers";
@@ -112,11 +113,8 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   // Memoized GeoJSON data derived from the records - this is read only and should never be modified.
   const originalGeoJsonData: GeoJSONFeatureCollection =
     useMemo((): GeoJSONFeatureCollection => {
-      return generateGeoJsonDataFromMemoizedRecords(
-        records,
-        selectedPropertyToLocateOnMap,
-      );
-    }, [records, selectedPropertyToLocateOnMap]);
+      return generateGeoJsonDataFromMemoizedRecords(records, null);
+    }, [records]);
 
   // Choose to use geoJsonDataCopy if it exists, otherwise fallback to originalGeoJsonData.
   const currentGeoJsonData: GeoJSONFeatureCollection =
@@ -132,6 +130,18 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   useEffect((): void => {
     setGeoJsonDataCopy(originalGeoJsonData);
   }, [originalGeoJsonData]);
+
+  // // recalculate the geoJsonDataCopy whenever selectedPropertyToLocateOnMap changes.
+  // useEffect((): void => {
+  //   const recalculatedGeoJsonData: GeoJSONFeatureCollection | null =
+  //     recalculateSelectedFeatureInGeoJsonDataCopy(
+  //       geoJsonDataCopy,
+  //       selectedPropertyToLocateOnMap,
+  //     );
+  //   if (!recalculatedGeoJsonData) return;
+  //   setGeoJsonDataCopy(recalculatedGeoJsonData);
+  //   // I only ever want this to fire when selectedPropertyToLocateOnMap changes not geoJsonDataCopy but eslint complains.
+  // }, [selectedPropertyToLocateOnMap]);
 
   // Effect to scroll to the selected property into view when it is selected from a map marker.
   useEffect(() => {
@@ -200,7 +210,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   // Effect to adjust the sliding window based on the selected map marker/property.
   useEffect(() => {
     const windowPointers: NewWindowPointers | undefined =
-      calculateWindowLocationWhenMarkerClicked(
+      calculateWindowLocation(
         selectedPropertyToLocateOnMap,
         features,
         maxVisibleFeatures,
@@ -242,7 +252,20 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   const handleChangePropertyToLocateOnMap: PropertyToLocateOnMapCB = (
     id: string,
   ): void => {
+    // Update the selected property first
     setSelectedPropertyToLocateOnMap(id);
+    
+    // Recalculate geoJsonDataCopy based on the new selected property
+    const recalculatedGeoJsonData: GeoJSONFeatureCollection | null =
+      recalculateSelectedFeatureInGeoJsonDataCopy(
+        geoJsonDataCopy,
+        id,
+      );
+    
+    // If recalculated data is valid, update the geoJsonDataCopy state
+    if (recalculatedGeoJsonData) {
+      setGeoJsonDataCopy(recalculatedGeoJsonData);
+    }
   };
 
   const handleApplyFilters: any = (): void => {
@@ -250,17 +273,24 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       originalGeoJsonData,
       filters,
     );
-    
+
     // Clear visible features if filtered results are empty
     if (filteredFeatures.length === 0) {
-      setVisibleFeatures([]); // Clear out visible features cache.
-    } else { // Only ever change the GeoJsonDataCopy when the filteredMemoizedGeoJsonData isn't empty.
-      const { leftIdx, rightIdx } = slidingWindowForVisibleFeatures;
-      const newVisibleFeatures: Feature[] = filteredFeatures.slice(
-        leftIdx,
-        rightIdx + 1,
+      setVisibleFeatures([]);
+    } else {
+      // Initialize window pointers for the filtered features.
+      const { newLeftIdx, newRightIdx}: NewWindowPointers = initializeWindowLocation(
+        filteredFeatures,
+        maxVisibleFeatures,
       );
-      setVisibleFeatures(newVisibleFeatures);
+      
+      // Update the sliding window state.
+      setSlidingWindowForVisibleFeatures({
+        leftIdx: newLeftIdx,
+        rightIdx: newRightIdx,
+      });
+      
+      // Update geoJsonDataCopy with the filtered features
       setGeoJsonDataCopy((prevState: GeoJSONFeatureCollection | null) => ({
         ...prevState,
         type: prevState?.type || "FeatureCollection",
@@ -307,11 +337,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
         [key]: { ...filters[key], [isMin ? "min" : "max"]: value },
       });
     };
-
-  console.log({ geoJsonDataCopy });
-  console.log("YA LENGTH: ");
-  console.log(propertyRefs)
-
+  
   return (
     <div className="mapbox-container">
       <FilterDataModal
@@ -368,7 +394,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
               handleOpenCloseFilterModal,
               filters,
               enableFilters,
-              geoJsonDataCopy
+              geoJsonDataCopy,
             }}
           />
         </>
