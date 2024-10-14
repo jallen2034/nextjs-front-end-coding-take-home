@@ -209,6 +209,24 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       });
     }
   }, [selectedPropertyToLocateOnMap, features, maxVisibleFeatures]);
+  
+  /* Effect to recalculate geoJsonDataCopy when a new property is selected.
+ * This updates the selected marker on the rendered map.
+ * Note: geoJsonDataCopy is intentionally excluded from dependencies to
+ * prevent unnecessary re-renders. Consider refactoring in the future
+ * to avoid ignoring ESLint warnings. */
+  useEffect(() => {
+    const recalculatedGeoJsonData: GeoJSONFeatureCollection | null =
+      recalculateSelectedFeatureInGeoJsonDataCopy(
+        geoJsonDataCopy,
+        selectedPropertyToLocateOnMap,
+      );
+    
+    if (recalculatedGeoJsonData) {
+      setGeoJsonDataCopy(recalculatedGeoJsonData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPropertyToLocateOnMap]);
 
   // Handler for map movements to update the view state.
   const onMove = useCallback(
@@ -224,24 +242,6 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     },
     [],
   );
-
-  /* Effect to recalculate geoJsonDataCopy when a new property is selected.
-   * This updates the selected marker on the rendered map.
-   * Note: geoJsonDataCopy is intentionally excluded from dependencies to
-   * prevent unnecessary re-renders. Consider refactoring in the future
-   * to avoid ignoring ESLint warnings. */
-  useEffect(() => {
-    const recalculatedGeoJsonData: GeoJSONFeatureCollection | null =
-      recalculateSelectedFeatureInGeoJsonDataCopy(
-        geoJsonDataCopy,
-        selectedPropertyToLocateOnMap,
-      );
-
-    if (recalculatedGeoJsonData) {
-      setGeoJsonDataCopy(recalculatedGeoJsonData);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPropertyToLocateOnMap]);
 
   // Callback function to handle state responsible for opening the modal in this component.
   const handleOpenCloseFilterModal: ChangeFilterModalCB = (
