@@ -24,9 +24,7 @@ const MapComponent = ({
   onMove,
 }: MapComponentProps) => {
   const [isMapLoaded, setIsMapLoadedInternal] = useState<boolean>(false);
-  console.log("Your current!");
-  console.log({ currentGeoJsonData });
-
+  
   return (
     <div className="map-wrapper">
       <Map

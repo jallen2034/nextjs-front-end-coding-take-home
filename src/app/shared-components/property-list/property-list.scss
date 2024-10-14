@@ -26,17 +26,23 @@
     top: 0; /* Keep the filter options fixed at the top */
     z-index: 1; /* Ensure it stays above the scrollable list */
 
-    .filter-button {
-      @include generic-red-button;
-      margin-right: 2.75rem;
-      display: flex; /* Make the button a flex container */
-      align-items: center; /* Center the items vertically */
-      justify-content: center; /* Center the items horizontally */
-      padding: 0.5rem 1rem;
+    .filter-button-flexbox {
+      display: flex;
+      height: 100%;
+      align-items: flex-start;
 
-      .filter-icon {
-        margin-left: 0.35rem;
-        font-size: 1.2rem;
+      .filter-button {
+        @include generic-red-button;
+        margin-right: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 0.5rem 1rem;
+
+        .filter-icon {
+          margin-left: 0.35rem;
+          font-size: 1.2rem;
+        }
       }
     }
   }
