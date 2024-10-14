@@ -15,7 +15,8 @@ import { MapRef, ViewStateChangeEvent } from "react-map-gl";
 import {
   applyFiltersFromModal,
   calculateWindowLocation,
-  generateGeoJsonDataFromMemoizedRecords, initializeWindowLocation,
+  generateGeoJsonDataFromMemoizedRecords,
+  initializeWindowLocation,
   recalculateSelectedFeatureInGeoJsonDataCopy,
   setupMapListeners,
   zoomToSelectedProperty,
@@ -131,19 +132,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     setGeoJsonDataCopy(originalGeoJsonData);
   }, [originalGeoJsonData]);
 
-  // // recalculate the geoJsonDataCopy whenever selectedPropertyToLocateOnMap changes.
-  // useEffect((): void => {
-  //   const recalculatedGeoJsonData: GeoJSONFeatureCollection | null =
-  //     recalculateSelectedFeatureInGeoJsonDataCopy(
-  //       geoJsonDataCopy,
-  //       selectedPropertyToLocateOnMap,
-  //     );
-  //   if (!recalculatedGeoJsonData) return;
-  //   setGeoJsonDataCopy(recalculatedGeoJsonData);
-  //   // I only ever want this to fire when selectedPropertyToLocateOnMap changes not geoJsonDataCopy but eslint complains.
-  // }, [selectedPropertyToLocateOnMap]);
-
-  // Effect to scroll to the selected property into view when it is selected from a map marker.
+  // Effect to scroll to the selected property into view when it is selected from a map marker. HERE
   useEffect(() => {
     if (selectedPropertyToLocateOnMap) {
       const index: number = visibleFeatures.findIndex(
@@ -156,6 +145,15 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
 
       // Guard clause to check if the index is -1 (not found) or if the reference itself is invalid.
       if (index === -1 || !propertyRef?.current) return;
+
+      const selectedFeature: Feature | undefined = features.find(
+        (feature: Feature): boolean =>
+          feature.properties.id === selectedPropertyToLocateOnMap,
+      );
+
+      if (selectedFeature) {
+        zoomToSelectedProperty(selectedFeature, mapRef);
+      }
 
       // Scroll to the referenced DOM element if valid.
       propertyRef.current.scrollIntoView({
@@ -176,20 +174,6 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       setVisibleFeatures(newVisibleFeatures);
     }
   }, [features, length, slidingWindowForVisibleFeatures]);
-
-  // Effect to zoom in on the selected property when it is changed.
-  useEffect(() => {
-    if (!selectedPropertyToLocateOnMap) return;
-
-    const selectedFeature: Feature | undefined = features.find(
-      (feature: Feature): boolean =>
-        feature.properties.id === selectedPropertyToLocateOnMap,
-    );
-
-    if (selectedFeature) {
-      zoomToSelectedProperty(selectedFeature, mapRef);
-    }
-  }, [features, selectedPropertyToLocateOnMap, mapRef]);
 
   // Effect to set up event listeners for marker clicks.
   useEffect(() => {
@@ -241,6 +225,24 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     [],
   );
 
+  /* Effect to recalculate geoJsonDataCopy when a new property is selected.
+   * This updates the selected marker on the rendered map.
+   * Note: geoJsonDataCopy is intentionally excluded from dependencies to
+   * prevent unnecessary re-renders. Consider refactoring in the future
+   * to avoid ignoring ESLint warnings. */
+  useEffect(() => {
+    const recalculatedGeoJsonData: GeoJSONFeatureCollection | null =
+      recalculateSelectedFeatureInGeoJsonDataCopy(
+        geoJsonDataCopy,
+        selectedPropertyToLocateOnMap,
+      );
+
+    if (recalculatedGeoJsonData) {
+      setGeoJsonDataCopy(recalculatedGeoJsonData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPropertyToLocateOnMap]);
+
   // Callback function to handle state responsible for opening the modal in this component.
   const handleOpenCloseFilterModal: ChangeFilterModalCB = (
     action: boolean,
@@ -254,18 +256,6 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   ): void => {
     // Update the selected property first
     setSelectedPropertyToLocateOnMap(id);
-    
-    // Recalculate geoJsonDataCopy based on the new selected property
-    const recalculatedGeoJsonData: GeoJSONFeatureCollection | null =
-      recalculateSelectedFeatureInGeoJsonDataCopy(
-        geoJsonDataCopy,
-        id,
-      );
-    
-    // If recalculated data is valid, update the geoJsonDataCopy state
-    if (recalculatedGeoJsonData) {
-      setGeoJsonDataCopy(recalculatedGeoJsonData);
-    }
   };
 
   const handleApplyFilters: any = (): void => {
@@ -279,17 +269,15 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       setVisibleFeatures([]);
     } else {
       // Initialize window pointers for the filtered features.
-      const { newLeftIdx, newRightIdx}: NewWindowPointers = initializeWindowLocation(
-        filteredFeatures,
-        maxVisibleFeatures,
-      );
-      
+      const { newLeftIdx, newRightIdx }: NewWindowPointers =
+        initializeWindowLocation(filteredFeatures, maxVisibleFeatures);
+
       // Update the sliding window state.
       setSlidingWindowForVisibleFeatures({
         leftIdx: newLeftIdx,
         rightIdx: newRightIdx,
       });
-      
+
       // Update geoJsonDataCopy with the filtered features
       setGeoJsonDataCopy((prevState: GeoJSONFeatureCollection | null) => ({
         ...prevState,
@@ -337,7 +325,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
         [key]: { ...filters[key], [isMin ? "min" : "max"]: value },
       });
     };
-  
+
   return (
     <div className="mapbox-container">
       <FilterDataModal

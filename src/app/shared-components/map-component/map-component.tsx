@@ -5,25 +5,28 @@ import { MAPBOX_API_SECRET_KEY } from "@/app/apiUtils";
 import { lowerMainlandBounds } from "@/app/shared-components/react-mapbox/helpers";
 import {
   clusterCountLayer,
-  clusterLayer, unclusteredPointLayer
+  clusterLayer,
+  unclusteredPointLayer,
 } from "@/app/shared-components/react-mapbox/mapbox-styles";
-import "./map-component.scss"
+import "./map-component.scss";
 
 interface MapComponentProps {
   viewState: any;
   mapRef: RefObject<MapRef>;
   currentGeoJsonData: GeoJSONFeatureCollection;
-  onMove: any
+  onMove: any;
 }
 
 const MapComponent = ({
   viewState,
   mapRef,
   currentGeoJsonData,
-  onMove
+  onMove,
 }: MapComponentProps) => {
   const [isMapLoaded, setIsMapLoadedInternal] = useState<boolean>(false);
-  
+  console.log("Your current!");
+  console.log({ currentGeoJsonData });
+
   return (
     <div className="map-wrapper">
       <Map
