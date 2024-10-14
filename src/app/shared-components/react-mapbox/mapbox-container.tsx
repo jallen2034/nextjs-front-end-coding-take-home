@@ -197,7 +197,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     setSelectedPropertyToLocateOnMap(id);
   };
   
-  const handleApplyFilters: any = () => {
+  const handleApplyFilters: any = (): void => {
     const filteredMemoizedGeoJsonData: any = applyFiltersFromModal();
     console.log(filteredMemoizedGeoJsonData)
   }
