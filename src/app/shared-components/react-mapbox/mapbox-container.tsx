@@ -11,17 +11,19 @@ import {
 } from "react";
 import { MapRef, ViewStateChangeEvent } from "react-map-gl";
 import {
-  calculateWindowLocationWhenMarkerClicked,
+  applyFiltersFromModal, calculateWindowLocationWhenMarkerClicked,
   generateGeoJsonDataFromMemoizedRecords,
   setupMapListeners,
   zoomToSelectedProperty,
 } from "@/app/shared-components/react-mapbox/helpers";
 import {
+  ChangeFilterModalCB,
   Feature,
   GeoJSONFeatureCollection,
   MapBoxContainerProps,
   MapViewState,
   NewWindowPointers,
+  PropertyToLocateOnMapCB,
   SlidingWindowPointers,
 } from "@/app/shared-components/react-mapbox/types";
 import "./mapbox-container.scss";
@@ -29,6 +31,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import useWindowSize from "@/app/shared-components/react-mapbox/custom-hooks/useWindowSize";
 import MapComponent from "@/app/shared-components/map-component/map-component";
 import PropertyList from "@/app/shared-components/property-list/property-list";
+import { FilterDataModal } from "@/app/shared-components/filter-data-modal/filter-data-modal";
 
 // Encapsulates the Mapbox map and is reusable across the Next.js app.
 const MapboxContainer = ({ records }: MapBoxContainerProps) => {
@@ -40,7 +43,10 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
 
   // Array of all the potential refs to attach to the elements generated below via visibleFeatures.
   const propertyRefs = useRef<(HTMLDivElement | null)[]>([]);
-  
+
+  // State to manage opening and closing the modal to filer the property data.
+  const [openFilterModal, setOpenFilterModal] = useState<boolean>(false);
+
   // State management for the map's view.
   const [viewState, setViewState] = useState<MapViewState>({
     longitude: -123.1207,
@@ -74,11 +80,11 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   // Destructure properties from the memoized GeoJSON data.
   const { features }: GeoJSONFeatureCollection = memoizedGeoJsonData;
   const { length }: Feature[] = features;
-  
+
   // Custom hook to calculate the window size.
   const { width } = useWindowSize();
   const isDesktop: boolean = width !== undefined && width >= 992; // Assuming 992px is your breakpoint
-  
+
   // Effect to scroll to the selected property into view when it is selected from a map marker.
   useEffect(() => {
     if (selectedPropertyToLocateOnMap) {
@@ -161,7 +167,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       });
     }
   }, [selectedPropertyToLocateOnMap, features, maxVisibleFeatures]);
-  
+
   // Handler for map movements to update the view state.
   const onMove = useCallback(
     ({
@@ -176,17 +182,38 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     },
     [],
   );
+
+  // Callback function to handle state responsible for opening the modal in this component.
+  const handleOpenCloseFilterModal: ChangeFilterModalCB = (
+    action: boolean,
+  ): void => {
+    setOpenFilterModal(action);
+  };
+
+  // Callback function to handle updating the selected property on map encapsulated to this component.
+  const handleChangePropertyToLocateOnMap: PropertyToLocateOnMapCB = (
+    id: string,
+  ): void => {
+    setSelectedPropertyToLocateOnMap(id);
+  };
+  
+  const handleApplyFilters: any = (): void => {
+    const filteredMemoizedGeoJsonData: any = applyFiltersFromModal();
+    console.log(filteredMemoizedGeoJsonData)
+  }
   
   return (
     <div className="mapbox-container">
+      <FilterDataModal {...{ handleOpenCloseFilterModal, openFilterModal, handleApplyFilters }} />
       {isDesktop ? (
         <>
           <PropertyList
             {...{
               visibleFeatures,
               propertyRefs,
-              setSelectedPropertyToLocateOnMap,
-              selectedPropertyToLocateOnMap
+              handleChangePropertyToLocateOnMap,
+              selectedPropertyToLocateOnMap,
+              handleOpenCloseFilterModal,
             }}
           />
           <MapComponent
@@ -194,7 +221,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
               viewState,
               mapRef,
               memoizedGeoJsonData,
-              onMove
+              onMove,
             }}
           />
         </>
@@ -205,15 +232,16 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
               viewState,
               mapRef,
               memoizedGeoJsonData,
-              onMove
+              onMove,
             }}
           />
           <PropertyList
             {...{
               visibleFeatures,
               propertyRefs,
-              setSelectedPropertyToLocateOnMap,
-              selectedPropertyToLocateOnMap
+              handleChangePropertyToLocateOnMap,
+              selectedPropertyToLocateOnMap,
+              handleOpenCloseFilterModal,
             }}
           />
         </>

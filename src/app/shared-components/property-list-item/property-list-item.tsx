@@ -1,5 +1,5 @@
 import React from "react";
-import { Feature } from "@/app/shared-components/react-mapbox/types";
+import { Feature, PropertyToLocateOnMapCB } from "@/app/shared-components/react-mapbox/types";
 import {
   Button,
   Card,
@@ -10,31 +10,20 @@ import {
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import "./propert-list-item.scss";
 
-/* Generally, I'm not a fan of passing setState functions down as props like this because it can lead to tightly coupled
- * components and "prop drilling" issues, which make the app harder to maintain, especially as it grows in size and complexity.
- * In larger applications, I prefer more encapsulated state management approaches (e.g., using context or custom hooks)
- * to avoid this kind of spaghetti code.  However, since this app is relatively small, and the component structure is simple,
- * passing setState here is an acceptable trade-off for simplicity sake imo. */
 interface PropertyListItemProps {
   feature: Feature;
-  setSelectedPropertyToLocateOnMap: React.Dispatch<
-    React.SetStateAction<string | null>
-  >;
-  isSelected: boolean
+  handleChangePropertyToLocateOnMap: PropertyToLocateOnMapCB;
+  isSelected: boolean;
 }
 
 export const PropertyListItem = ({
   feature,
-  setSelectedPropertyToLocateOnMap,
+  handleChangePropertyToLocateOnMap,
   isSelected,
 }: PropertyListItemProps) => {
   const {
     properties: { address, bathrooms, bedrooms, date, price, id, area_sqft },
   }: Feature = feature;
-
-  const handleSelect = (): void => {
-    setSelectedPropertyToLocateOnMap(id);
-  };
   
   return (
     <Card
@@ -70,7 +59,7 @@ export const PropertyListItem = ({
             variant="contained"
             color="primary"
             className="order-button"
-            onClick={handleSelect}
+            onClick={() => handleChangePropertyToLocateOnMap(id)}
           >
             Locate on Map
           </Button>

@@ -1,7 +1,9 @@
 // Define bounds for the Lower Mainland (northwest and southeast corners).
 import { Property, ResaleDataFromAPI } from "@/app/map/types";
 import {
-  Feature, GeoJSONFeatureCollection, NewWindowPointers, SlidingWindowPointers,
+  Feature,
+  GeoJSONFeatureCollection,
+  NewWindowPointers
 } from "@/app/shared-components/react-mapbox/types";
 import { RefObject } from "react";
 import { MapRef } from "react-map-gl";
@@ -54,7 +56,7 @@ const zoomToSelectedProperty = (
   if (selectedFeature && mapRef.current) {
     // @ts-expect-error: todo: fix this TS error with bbox wanting a correct Feature type def.
     const [minLng, minLat, maxLng, maxLat] = bbox(selectedFeature);
-    
+
     // Fit the map to the bounding box.
     mapRef.current.fitBounds(
       [
@@ -76,32 +78,32 @@ const zoomToSelectedProperty = (
 const calculateWindowLocationWhenMarkerClicked = (
   id: string | null,
   features: Feature[],
-  maxVisibleFeatures: number
+  maxVisibleFeatures: number,
 ): NewWindowPointers | undefined => {
   // Find the index of the clicked marker in the features list.
   const clickedFeatureIndex: number = features.findIndex(
-    (feature: Feature) => feature.properties.id === id
+    (feature: Feature) => feature.properties.id === id,
   );
-  
+
   if (clickedFeatureIndex === -1) return; // Feature not found
-  
+
   // Calculate new indices  in the sliding window.
   const newLeftIdx: number = Math.max(
     Math.floor(clickedFeatureIndex / maxVisibleFeatures) * maxVisibleFeatures,
-    0
+    0,
   );
-  
+
   const newRightIdx: number = Math.min(
     newLeftIdx + maxVisibleFeatures - 1,
-    features.length - 1
+    features.length - 1,
   );
-  
+
   return { newLeftIdx, newRightIdx };
 };
 
 const setupMapListeners = (
   map: MapRef,
-  setSelectedPropertyToLocateOnMap: (id: string) => void
+  setSelectedPropertyToLocateOnMap: (id: string) => void,
 ) => {
   const handleMarkerClickListener = (e: MapMouseEvent): void => {
     if (!e.features) return;
@@ -109,11 +111,11 @@ const setupMapListeners = (
     const { id }: Property = properties;
     setSelectedPropertyToLocateOnMap(id); // Set the clicked marker's ID to be the selected property on the map.
   };
-  
+
   const handleMouseHoverListener = (): void => {
     map.getCanvas().style.cursor = "pointer"; // Change cursor to pointer
   };
-  
+
   const handleMouseLeaveListener = (): void => {
     map.getCanvas().style.cursor = ""; // Reset cursor style.
     // @ts-ignore
@@ -121,12 +123,12 @@ const setupMapListeners = (
     // @ts-ignore
     map.off("mouseleave", "unclustered-point"); // Clean up mouse leave listener.
   };
-  
+
   // Attach event listeners to the map ref.
   map.on("click", "unclustered-point", handleMarkerClickListener);
   map.on("mouseenter", "unclustered-point", handleMouseHoverListener);
   map.on("mouseleave", "unclustered-point", handleMouseLeaveListener);
-  
+
   // Return cleanup function
   return () => {
     // @ts-ignore
@@ -138,10 +140,17 @@ const setupMapListeners = (
   };
 };
 
+// Helper function with the logic to apply our filters the user sets from the modal
+const applyFiltersFromModal = (): string => {
+  // todo: implement logic in here to update the memoizedGeoJsonData.
+  return "Hello world";
+}
+
 export {
   lowerMainlandBounds,
   generateGeoJsonDataFromMemoizedRecords,
   zoomToSelectedProperty,
   setupMapListeners,
-  calculateWindowLocationWhenMarkerClicked
+  calculateWindowLocationWhenMarkerClicked,
+  applyFiltersFromModal
 };

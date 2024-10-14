@@ -43,7 +43,7 @@ const MapComponent = ({
             type="geojson"
             data={memoizedGeoJsonData}
             cluster={true}
-            clusterMaxZoom={14}
+            clusterMaxZoom={10}
             clusterRadius={50}
           >
             <Layer {...clusterLayer} />
