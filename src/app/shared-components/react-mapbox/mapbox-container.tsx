@@ -206,8 +206,8 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
   /* Effect to recalculate geoJsonDataCopy when a new property is selected.
    * This updates the selected marker on the rendered map.
    * Note: geoJsonDataCopy is intentionally excluded from dependencies to
-   * prevent unnecessary re-renders. Consider refactoring in the future
-   * to avoid ignoring ESLint warnings. */
+   * prevent unnecessary re-renders. Consider refactoring this in
+   * the future to avoid ignoring ESLint warnings. */
   useEffect(() => {
     const recalculatedGeoJsonData: GeoJSONFeatureCollection | null =
       recalculateSelectedFeatureInGeoJsonDataCopy(

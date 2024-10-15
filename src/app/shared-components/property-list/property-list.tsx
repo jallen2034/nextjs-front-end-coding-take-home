@@ -53,8 +53,6 @@ const PropertyList: FC<PropertyListProps> = ({
     setCurrentPage(currentPage);
   }, [slidingWindowForVisibleFeatures]);
   
-  console.log("geoJsonDataCopy: ", geoJsonDataCopy)
-  
   return (
     <div className="property-list-container">
       {/* Fixed filter options div */}
