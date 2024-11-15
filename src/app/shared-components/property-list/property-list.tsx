@@ -52,6 +52,8 @@ const PropertyList: FC<PropertyListProps> = ({
     const currentPage: number = calculateCurrentPage(slidingWindowForVisibleFeatures.leftIdx);
     setCurrentPage(currentPage);
   }, [slidingWindowForVisibleFeatures]);
+
+  console.log({ visibleFeatures });
   
   return (
     <div className="property-list-container">

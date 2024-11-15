@@ -317,6 +317,8 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       });
     };
 
+  console.log({ propertyRefs });
+
   return (
     <div className="mapbox-container">
       <FilterDataModal
