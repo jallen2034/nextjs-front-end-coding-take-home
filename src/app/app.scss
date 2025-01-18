@@ -29,6 +29,8 @@
 
     .buttonWrapper {
       margin-top: 20px;
+      display: flex;
+      justify-content: center;
 
       .calculatorButton {
         @include generic-blue-button; // Reusing the mixin
