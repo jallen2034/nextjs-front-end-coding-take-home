@@ -145,7 +145,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       );
 
       if (!result) return;
-      
+
       const { selectedFeature, propertyRef }: SelectedPropertyResult = result;
 
       if (selectedFeature) {
@@ -153,7 +153,10 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       }
 
       // Scroll to the referenced DOM element if valid.
-      propertyRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      propertyRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
     }
   }, [features, selectedPropertyToLocateOnMap, visibleFeatures]);
 
@@ -250,21 +253,24 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
     // Update the selected property first
     setSelectedPropertyToLocateOnMap(id);
   };
-  
+
   const handleApplyFilters = (): void => {
-    const filteredFeatures: Feature[] = applyFiltersFromModal(originalGeoJsonData, filters);
-    
+    const filteredFeatures: Feature[] = applyFiltersFromModal(
+      originalGeoJsonData,
+      filters,
+    );
+
     // Clear visible features if filtered results are empty
     if (filteredFeatures.length === 0) {
       setVisibleFeatures([]);
       setOpenFilterModal(false);
       return;
     }
-    
+
     // Initialize window pointers for the filtered features.
     const { newLeftIdx, newRightIdx }: NewWindowPointers =
       initializeWindowLocation(filteredFeatures, maxVisibleFeatures);
-    
+
     // Update the sliding window state.
     setSlidingWindowForVisibleFeatures({
       leftIdx: newLeftIdx,
@@ -317,8 +323,6 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
       });
     };
 
-  console.log({ propertyRefs });
-
   return (
     <div className="mapbox-container">
       <FilterDataModal
@@ -345,7 +349,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
               filters,
               enableFilters,
               geoJsonDataCopy,
-              slidingWindowForVisibleFeatures
+              slidingWindowForVisibleFeatures,
             }}
           />
           <MapComponent
@@ -377,7 +381,7 @@ const MapboxContainer = ({ records }: MapBoxContainerProps) => {
               filters,
               enableFilters,
               geoJsonDataCopy,
-              slidingWindowForVisibleFeatures
+              slidingWindowForVisibleFeatures,
             }}
           />
         </>

@@ -9,8 +9,12 @@ export default function Home() {
   const router: AppRouterInstance = useRouter();
 
   // Navigate to the /calculator route when the button is clicked.
-  const handleButtonClick = (): void => {
+  const handleMapButtonClick = (): void => {
     router.push("/map");
+  };
+
+  const handlePaginationButtonClick = () => {
+    router.push('/pagination');
   };
 
   return (
@@ -24,14 +28,22 @@ export default function Home() {
           interactive map. Use filters to dive deeper into the trends and
           insights from the dataset.
         </Typography>
-        <Box className="buttonWrapper">
+        <Box className="buttonWrapper" sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="contained"
             color="primary"
             className="calculatorButton"
-            onClick={handleButtonClick}
+            onClick={handleMapButtonClick}
           >
-            Launch map
+            Launch Map
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            className="calculatorButton"
+            onClick={handlePaginationButtonClick}
+          >
+            Launch Paginated Data Demo
           </Button>
         </Box>
       </div>

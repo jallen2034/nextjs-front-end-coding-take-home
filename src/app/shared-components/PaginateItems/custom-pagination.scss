@@ -1,0 +1,33 @@
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  button {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db; // Gray-300
+    border-radius: 0.375rem;
+    background-color: #ffffff; // White
+    color: #374151; // Gray-700
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+
+    &:hover:not(:disabled) {
+      background-color: #f3f4f6; // Gray-100
+      color: #1f2937; // Gray-900
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .active {
+    background-color: #3b82f6; // Blue-500
+    color: #ffffff; // White
+    border-color: #3b82f6; // Blue-500
+    cursor: default;
+  }
+}
